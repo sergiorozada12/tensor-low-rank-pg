@@ -1,9 +1,17 @@
-import numpy as np
+class Buffer:
+    def __init__(self):
+        self.actions = []
+        self.states = []
+        self.logprobs = []
+        self.rewards = []
+        self.terminals = []
 
+    def clear(self):
+        self.actions = []
+        self.states = []
+        self.logprobs = []
+        self.rewards = []
+        self.terminals = []
 
-def calculate_returns(rewards, gamma):
-    result = np.empty_like(rewards)
-    result[-1] = rewards[-1]
-    for t in range(len(rewards)-2, -1, -1):
-        result[t] = rewards[t] + gamma*result[t+1]
-    return result
+    def __len__(self):
+        return len(self.states)
