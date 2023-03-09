@@ -6,11 +6,11 @@ def REINFORCE(
 ):
     totals, timesteps = [], []
     for epoch in range(epochs):
-        state = env.reset()
+        state, _ = env.reset()
         cum_reward = 0
         for t in range(T):
             action = agent.select_action(state)
-            state_next, reward, done, _ = env.step(action)
+            state_next, reward, done, _, _ = env.step(action)
 
             agent.buffer.rewards.append(reward)
             agent.buffer.terminals.append(done)
