@@ -9,7 +9,6 @@ from torch.nn.utils.convert_parameters import parameters_to_vector
 from torch.nn.utils.convert_parameters import vector_to_parameters
 
 from src.utils import Buffer
-from src.models.mlp import Mlp
 from src.agents.agents import GaussianAgent, SoftmaxAgent
 
 
