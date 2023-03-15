@@ -1,25 +1,26 @@
 from typing import Tuple, List
+from copy import deepcopy
 
 import numpy as np
 import torch
 import torch.nn as nn
 
 from src.utils import Buffer
-from src.models.mlp import Mlp
 from src.agents.agents import GaussianAgent, SoftmaxAgent
 
 
 class PPOGaussianNN:
     def __init__(
         self,
-        state_dim: int,
-        hidden_dims: List[int],
-        action_dim: int,
-        lr_actor: float,
-        lr_critic: float,
-        gamma: float,
-        epochs: int,
-        eps_clip: float
+        actor,
+        critic,
+        discretizer_actor=None,
+        discretizer_critic=None,
+        lr_actor: float=1e-3,
+        lr_critic: float=1e-3,
+        gamma: float=0.99,
+        epochs: int=1000,
+        eps_clip: float=0.2,
     ) -> None:
 
         self.gamma = gamma
@@ -28,13 +29,11 @@ class PPOGaussianNN:
 
         self.buffer = Buffer()
 
-        actor = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic = Mlp(state_dim, hidden_dims, action_dim).double()
-        actor_old = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic_old = Mlp(state_dim, hidden_dims, action_dim).double()
+        actor_old = deepcopy(actor)
+        critic_old = deepcopy(critic)
 
-        self.policy = GaussianAgent(actor, critic)
-        self.policy_old = GaussianAgent(actor_old, critic_old)
+        self.policy = GaussianAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.policy_old = GaussianAgent(actor_old, critic_old, discretizer_actor, discretizer_critic)
         
         mu_params = list(self.policy.actor.parameters())
         std_params = [self.policy.log_sigma]
@@ -42,7 +41,6 @@ class PPOGaussianNN:
         self.opt_actor = torch.optim.Adam(mu_params + std_params, lr_actor)
         self.opt_critic = torch.optim.Adam(self.policy.critic.parameters(), lr_critic)
 
-        self.policy_old.load_state_dict(self.policy.state_dict())        
         self.MseLoss = nn.MSELoss()
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
@@ -108,14 +106,15 @@ class PPOGaussianNN:
 class PPOSoftmaxNN:
     def __init__(
         self,
-        state_dim: int,
-        hidden_dims: List[int],
-        action_dim: int,
-        lr_actor: float,
-        lr_critic: float,
-        gamma: float,
-        epochs: int,
-        eps_clip: float
+        actor,
+        critic,
+        discretizer_actor=None,
+        discretizer_critic=None,
+        lr_actor: float=1e-3,
+        lr_critic: float=1e-3,
+        gamma: float=0.99,
+        epochs: int=1000,
+        eps_clip: float=0.2,
     ) -> None:
 
         self.gamma = gamma
@@ -124,13 +123,11 @@ class PPOSoftmaxNN:
 
         self.buffer = Buffer()
 
-        actor = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic = Mlp(state_dim, hidden_dims, 1).double()
-        actor_old = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic_old = Mlp(state_dim, hidden_dims, 1).double()
+        actor_old = deepcopy(actor)
+        critic_old = deepcopy(critic)
 
-        self.policy = SoftmaxAgent(actor, critic)
-        self.policy_old = SoftmaxAgent(actor_old, critic_old)
+        self.policy = SoftmaxAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.policy_old = SoftmaxAgent(actor_old, critic_old, discretizer_actor, discretizer_critic)
 
         self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
         self.opt_critic = torch.optim.Adam(self.policy.critic.parameters(), lr_critic)

@@ -16,11 +16,12 @@ from src.agents.agents import GaussianAgent, SoftmaxAgent
 class TRPOGaussianNN:
     def __init__(
         self,
-        state_dim: int,
-        hidden_dims: List[int],
-        action_dim: int,
-        lr_critic: float,
-        gamma: float,
+        actor,
+        critic,
+        discretizer_actor=None,
+        discretizer_critic=None,
+        lr_critic: float=1e-3,
+        gamma: float=0.99,
         delta: float=.01,
         cg_dampening: float=0.001,
         cg_tolerance: float=1e-10,
@@ -35,15 +36,12 @@ class TRPOGaussianNN:
 
         self.buffer = Buffer()
 
-        actor = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic = Mlp(state_dim, hidden_dims, action_dim).double()
-        actor_old = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic_old = Mlp(state_dim, hidden_dims, action_dim).double()
+        actor_old = deepcopy(actor)
+        critic_old = deepcopy(critic)
 
-        self.policy = GaussianAgent(actor, critic)
-        self.policy_old = GaussianAgent(actor_old, critic_old)
-        self.policy_old.load_state_dict(self.policy.state_dict())
-        
+        self.policy = GaussianAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.policy_old = GaussianAgent(actor_old, critic_old, discretizer_actor, discretizer_critic)
+
         self.opt_critic = torch.optim.Adam(self.policy.critic.parameters(), lr_critic)
         self.MseLoss = nn.MSELoss()
 
@@ -195,11 +193,12 @@ class TRPOGaussianNN:
 class TRPOSoftmaxNN:
     def __init__(
         self,
-        state_dim: int,
-        hidden_dims: List[int],
-        action_dim: int,
-        lr_critic: float,
-        gamma: float,
+        actor,
+        critic,
+        discretizer_actor=None,
+        discretizer_critic=None,
+        lr_critic: float=1e-3,
+        gamma: float=0.99,
         delta: float=.01,
         cg_dampening: float=0.001,
         cg_tolerance: float=1e-10,
@@ -214,15 +213,12 @@ class TRPOSoftmaxNN:
 
         self.buffer = Buffer()
 
-        actor = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic = Mlp(state_dim, hidden_dims, 1).double()
-        actor_old = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic_old = Mlp(state_dim, hidden_dims, 1).double()
+        actor_old = deepcopy(actor)
+        critic_old = deepcopy(critic)
 
-        self.policy = SoftmaxAgent(actor, critic)
-        self.policy_old = SoftmaxAgent(actor_old, critic_old)
-        self.policy_old.load_state_dict(self.policy.state_dict())
-        
+        self.policy = SoftmaxAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.policy_old = SoftmaxAgent(actor_old, critic_old, discretizer_actor, discretizer_critic)
+
         self.opt_critic = torch.optim.Adam(self.policy.critic.parameters(), lr_critic)
         self.MseLoss = nn.MSELoss()
 

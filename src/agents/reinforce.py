@@ -1,18 +1,23 @@
 import numpy as np
 import torch
 
-from src.models.mlp import Mlp
 from src.agents.agents import GaussianAgent, SoftmaxAgent
 from src.utils import Buffer
 
 
 class ReinforceGaussianNN:
-    def __init__(self, state_dim, hidden_dims, action_dim, gamma=0.99, lr_actor=1e-2, lr_critic=1e-2):
+    def __init__(
+            self,
+            actor,
+            critic,
+            discretizer_actor=None,
+            discretizer_critic=None,
+            gamma=0.99,
+            lr_actor=1e-2,
+            lr_critic=1e-2
+        ):
         self.gamma = gamma
-
-        actor = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic = Mlp(state_dim, hidden_dims, action_dim).double()
-        self.policy = GaussianAgent(actor, critic)
+        self.policy = GaussianAgent(actor, critic, discretizer_actor, discretizer_critic)
 
         mu_params = list(self.policy.actor.parameters())
         std_params = [self.policy.log_sigma]
@@ -69,12 +74,18 @@ class ReinforceGaussianNN:
 
 
 class ReinforceSoftmaxNN:
-    def __init__(self, state_dim, hidden_dims, action_dim, gamma=0.99, lr_actor=1e-2, lr_critic=1e-2):
+    def __init__(
+            self,
+            actor,
+            critic,
+            discretizer_actor=None,
+            discretizer_critic=None,
+            gamma=0.99,
+            lr_actor=1e-2,
+            lr_critic=1e-2
+        ):
         self.gamma = gamma
-
-        actor = Mlp(state_dim, hidden_dims, action_dim).double()
-        critic = Mlp(state_dim, hidden_dims, 1).double()
-        self.policy = SoftmaxAgent(actor, critic)
+        self.policy = SoftmaxAgent(actor, critic, discretizer_actor, discretizer_critic)
 
         self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
         self.opt_critic = torch.optim.Adam(self.policy.critic.parameters(), lr_critic)

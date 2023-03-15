@@ -6,7 +6,7 @@ import torch.nn as nn
 
 
 class GaussianAgent(nn.Module):
-    def __init__(self, actor, critic) -> None:
+    def __init__(self, actor, critic, discretizer_actor=None, discretizer_critic=None) -> None:
         super(GaussianAgent, self).__init__()
 
         self.actor = actor
@@ -14,11 +14,18 @@ class GaussianAgent(nn.Module):
 
         self.log_sigma = torch.ones(1, dtype=torch.double, requires_grad=True)
 
+        self.discretizer_actor = discretizer_actor
+        self.discretizer_critic = discretizer_critic
+
     def pi(self, state: np.ndarray) -> torch.distributions.Normal:
         state = torch.as_tensor(state).double()
 
         # Parameters
-        mu = self.actor(state).squeeze()
+        if self.discretizer_actor:
+            rows, cols = self.discretizer_actor.get_index(state)
+            mu = self.actor(rows, cols).squeeze()
+        else:
+            mu = self.actor(state).squeeze()
         log_sigma = self.log_sigma
         sigma = torch.exp(log_sigma)
 
@@ -34,6 +41,10 @@ class GaussianAgent(nn.Module):
     
     def evaluate_value(self, state: torch.Tensor) -> torch.Tensor:
         # Critic
+        if self.discretizer_critic:
+            rows, cols = self.discretizer_critic.get_index(state)
+            value = self.critic(rows, cols)
+            return value.squeeze()
         value = self.critic(state)
         return value.squeeze()
 
@@ -45,17 +56,24 @@ class GaussianAgent(nn.Module):
 
 
 class SoftmaxAgent(nn.Module):
-    def __init__(self, actor, critic) -> None:
+    def __init__(self, actor, critic, discretizer_actor=None, discretizer_critic=None) -> None:
         super(SoftmaxAgent, self).__init__()
 
         self.actor = actor
         self.critic = critic
 
+        self.discretizer_actor = discretizer_actor
+        self.discretizer_critic = discretizer_critic
+
     def pi(self, state: np.ndarray) -> torch.distributions.Normal:
         state = torch.as_tensor(state).double()
 
         # Parameters
-        logits = self.actor(state).squeeze()
+        if self.discretizer_actor:
+            rows, cols = self.discretizer_actor.get_index(state)
+            logits = self.actor(rows, cols).squeeze()
+        else:
+            logits = self.actor(state).squeeze()
 
         # Distribution
         pi = torch.distributions.categorical.Categorical(logits=logits)
@@ -69,6 +87,10 @@ class SoftmaxAgent(nn.Module):
     
     def evaluate_value(self, state: torch.Tensor) -> torch.Tensor:
         # Critic
+        if self.discretizer_critic:
+            rows, cols = self.discretizer_critic.get_index(state)
+            value = self.critic(rows, cols)
+            return value.squeeze()
         value = self.critic(state)
         return value.squeeze()
 
