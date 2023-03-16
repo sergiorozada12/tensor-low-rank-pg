@@ -57,9 +57,11 @@ class Discretizer:
             return idx
 
         row_idx = idx[:, self.dimensions[0]]
-        col_idx = idx[:, self.dimensions[1]]
-
         row = np.sum(row_idx*self.row_offset, axis=1)
-        col = np.sum(col_idx*self.col_offset, axis=1)
+
+        col = None
+        if self.dimensions[1]:
+            col_idx = idx[:, self.dimensions[1]]
+            col = np.sum(col_idx*self.col_offset, axis=1)
 
         return [row, col]

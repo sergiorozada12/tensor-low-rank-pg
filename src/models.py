@@ -34,8 +34,10 @@ class LR(torch.nn.Module):
         
     def forward(self, indices):
         rows, cols = indices
-        prod = self.L[rows, :] * self.R[:, cols].T
-        return torch.sum(prod, dim=-1)
+        if cols is not None:
+            prod = self.L[rows, :] * self.R[:, cols].T
+            return torch.sum(prod, dim=-1)
+        return torch.matmul(self.L[rows, :], self.R.T)
 
 
 class PARAFAC(torch.nn.Module):
