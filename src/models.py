@@ -56,8 +56,10 @@ class PARAFAC(torch.nn.Module):
     def forward(self, indices):
         bsz = indices.shape[0]
         prod = torch.ones(bsz, self.k, dtype=torch.double)
-        for i in range(self.n_factors):
+        for i in range(indices.shape[1]):
             idx = indices[:, i]
             factor = self.factors[i]
             prod *= factor[idx, :]
+        if indices.shape[1] < len(self.factors):
+            return torch.matmul(prod, self.factors[-1].T)
         return torch.sum(prod, dim=-1)
