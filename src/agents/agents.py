@@ -22,8 +22,9 @@ class GaussianAgent(nn.Module):
 
         # Parameters
         if self.discretizer_actor:
-            rows, cols = self.discretizer_actor.get_index(state)
-            mu = self.actor(rows, cols).squeeze()
+            state = state.numpy().reshape(-1, len(self.discretizer_actor.buckets))
+            indices = self.discretizer_actor.get_index(state)
+            mu = self.actor(indices).squeeze()
         else:
             mu = self.actor(state).squeeze()
         log_sigma = self.log_sigma
@@ -42,8 +43,9 @@ class GaussianAgent(nn.Module):
     def evaluate_value(self, state: torch.Tensor) -> torch.Tensor:
         # Critic
         if self.discretizer_critic:
-            rows, cols = self.discretizer_critic.get_index(state)
-            value = self.critic(rows, cols)
+            state = state.numpy().reshape(-1, len(self.discretizer_actor.buckets))
+            indices = self.discretizer_critic.get_index(state)
+            value = self.critic(indices)
             return value.squeeze()
         value = self.critic(state)
         return value.squeeze()
@@ -70,8 +72,9 @@ class SoftmaxAgent(nn.Module):
 
         # Parameters
         if self.discretizer_actor:
-            rows, cols = self.discretizer_actor.get_index(state)
-            logits = self.actor(rows, cols).squeeze()
+            state = state.numpy().reshape(-1, len(self.discretizer_actor.buckets))
+            indices = self.discretizer_actor.get_index(state)
+            logits = self.actor(indices).squeeze()
         else:
             logits = self.actor(state).squeeze()
 
@@ -88,8 +91,9 @@ class SoftmaxAgent(nn.Module):
     def evaluate_value(self, state: torch.Tensor) -> torch.Tensor:
         # Critic
         if self.discretizer_critic:
-            rows, cols = self.discretizer_critic.get_index(state)
-            value = self.critic(rows, cols)
+            state = state.numpy().reshape(-1, len(self.discretizer_actor.buckets))
+            indices = self.discretizer_critic.get_index(state)
+            value = self.critic(indices)
             return value.squeeze()
         value = self.critic(state)
         return value.squeeze()

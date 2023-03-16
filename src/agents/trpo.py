@@ -32,6 +32,7 @@ class TRPOGaussianNN:
         self.cg_dampening = cg_dampening
         self.cg_tolerance = cg_tolerance
         self.cg_iteration = cg_iteration
+        self.discretizer_actor = discretizer_actor
 
         self.buffer = Buffer()
 
@@ -67,9 +68,15 @@ class TRPOGaussianNN:
         return returns
 
     def kl_penalty(self, states):
-        mu1 = self.policy_old.actor(states).detach()
+        if self.discretizer_actor:
+            states = states.numpy().reshape(-1, len(self.discretizer_actor.buckets))
+            indices = self.discretizer_actor.get_index(states)
+            mu1 = self.policy_old.actor(indices).detach().unsqueeze(1)
+            mu2 = self.policy.actor(indices).unsqueeze(1)
+        else:
+            mu1 = self.policy_old.actor(states).detach()
+            mu2 = self.policy.actor(states)
         log_sigma1 = self.policy_old.log_sigma.detach()
-        mu2 = self.policy.actor(states)
         log_sigma2 = self.policy.log_sigma
 
         kl = ((log_sigma2 - log_sigma1) + 0.5 * (log_sigma1.exp().pow(2)
