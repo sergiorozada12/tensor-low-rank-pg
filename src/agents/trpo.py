@@ -130,7 +130,7 @@ class TRPOGaussianNN:
             else:
                 self.policy_old = deepcopy(self.policy)
                 return
-            
+        self.policy = deepcopy(policy)
 
     def fvp(self, vector, states):
         vector = vector.clone().requires_grad_()
@@ -170,6 +170,7 @@ class TRPOGaussianNN:
     def update(self):
         rewards = self.calculate_returns()
         rewards = torch.as_tensor(rewards).double().detach().squeeze()
+        rewards = (rewards - rewards.mean()) / rewards.std()
 
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
@@ -302,7 +303,7 @@ class TRPOSoftmaxNN:
             else:
                 self.policy_old = deepcopy(self.policy)
                 return
-            
+        self.policy = deepcopy(policy)
 
     def fvp(self, vector, states, actions, old_logprobs):
         vector = vector.clone().requires_grad_()
@@ -342,6 +343,7 @@ class TRPOSoftmaxNN:
     def update(self):
         rewards = self.calculate_returns()
         rewards = torch.as_tensor(rewards).double().detach().squeeze()
+        rewards = (rewards - rewards.mean()) / rewards.std()
 
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
