@@ -2,15 +2,18 @@ def REINFORCE(
         env,
         agent,
         epochs=100,
-        T=1000
+        max_steps=1000
 ):
     totals, timesteps = [], []
     for epoch in range(epochs):
         state, _ = env.reset()
         cum_reward = 0
-        for t in range(T):
+        for t in range(max_steps):
             action = agent.select_action(state)
             state_next, reward, done, _, _ = env.step(action)
+
+            if t + 1 == max_steps:
+                done = True
 
             agent.buffer.rewards.append(reward)
             agent.buffer.terminals.append(done)

@@ -17,6 +17,9 @@ def TRPO(
         for t in range(max_steps):
             action = agent.select_action(state)
             state_next, reward, done, _, _ = env.step(action)
+            
+            if t + 1 == max_steps:
+                done = True
 
             agent.buffer.rewards.append(reward)
             agent.buffer.terminals.append(done)
@@ -31,5 +34,6 @@ def TRPO(
             state = state_next
         returns.append(cum_reward)
         timesteps.append(t)
-        print(f'{epoch}/{epochs}: {returns[-1]} \r', end='')
+        #print(f'{epoch}/{epochs}: {returns[-1]} \r', end='')
+        print(f'{epoch}/{epochs}: {returns[-1]}')
     return agent, returns, timesteps

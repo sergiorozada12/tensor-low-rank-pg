@@ -18,6 +18,9 @@ def PPO(
             action = agent.select_action(state)
             state_next, reward, done, _, _ = env.step(action)
 
+            if t + 1 == max_steps:
+                done = True
+
             agent.buffer.rewards.append(reward)
             agent.buffer.terminals.append(done)
             cum_reward += reward
