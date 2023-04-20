@@ -34,6 +34,5 @@ def TRPO(
             state = state_next
         returns.append(cum_reward)
         timesteps.append(t)
-        #print(f'{epoch}/{epochs}: {returns[-1]} \r', end='')
-        print(f'{epoch}/{epochs}: {returns[-1]}')
+        print(f'{epoch}/{epochs}: {returns[-1]} \r', end='')
     return agent, returns, timesteps
