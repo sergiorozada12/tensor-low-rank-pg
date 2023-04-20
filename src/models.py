@@ -2,7 +2,7 @@ import torch
 
 
 class PolicyNetwork(torch.nn.Module):
-    def __init__(self, num_inputs, num_hiddens, num_outputs):
+    def __init__(self, num_inputs, num_hiddens, num_outputs, model='gaussian'):
         super(PolicyNetwork, self).__init__()
         self.layers = torch.nn.ModuleList()
         for h in num_hiddens:
@@ -11,12 +11,16 @@ class PolicyNetwork(torch.nn.Module):
             num_inputs = h
         self.layers.append(torch.nn.Linear(num_inputs, num_outputs))
 
-        self.log_sigma = torch.nn.Parameter(torch.zeros(1, num_outputs))
+        self.model = model
+        if model == 'gaussian':
+            self.log_sigma = torch.nn.Parameter(torch.zeros(1, num_outputs))
 
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
-        return x, self.log_sigma
+        if self.model == 'gaussian':
+            return x, self.log_sigma
+        return x
 
 
 class ValueNetwork(torch.nn.Module):
@@ -36,7 +40,7 @@ class ValueNetwork(torch.nn.Module):
 
 
 class PolicyLR(torch.nn.Module):
-    def __init__(self, n, m, k, scale=1.0):
+    def __init__(self, n, m, k, scale=1.0, model='gaussian'):
         super().__init__()
 
         L = scale*torch.randn(n, k, dtype=torch.float32, requires_grad=True)
@@ -45,14 +49,18 @@ class PolicyLR(torch.nn.Module):
         self.L = torch.nn.Parameter(L)
         self.R = torch.nn.Parameter(R)
 
-        self.log_sigma = torch.nn.Parameter(torch.zeros(1))
+        self.model = model
+        if model == 'gaussian':
+            self.log_sigma = torch.nn.Parameter(torch.zeros(1))
 
     def forward(self, indices):
         rows, cols = indices
         if cols is not None:
             prod = self.L[rows, :] * self.R[:, cols].T
             return torch.sum(prod, dim=-1)
-        return torch.matmul(self.L[rows, :], self.R.T), self.log_sigma
+        if self.model == 'gaussian':
+            return torch.matmul(self.L[rows, :], self.R.T), self.log_sigma
+        return torch.matmul(self.L[rows, :], self.R.T)
 
 
 class ValueLR(torch.nn.Module):
@@ -74,7 +82,7 @@ class ValueLR(torch.nn.Module):
 
 
 class PolicyPARAFAC(torch.nn.Module):
-    def __init__(self, dims, k, scale=1.0):
+    def __init__(self, dims, k, scale=1.0, model='gaussian'):
         super().__init__()
         
         self.k = k
@@ -86,7 +94,9 @@ class PolicyPARAFAC(torch.nn.Module):
             factors.append(torch.nn.Parameter(factor))
         self.factors = torch.nn.ParameterList(factors)
 
-        self.log_sigma = torch.nn.Parameter(torch.zeros(1))
+        self.model = model
+        if model == 'gaussian':
+            self.log_sigma = torch.nn.Parameter(torch.zeros(1))
 
     def forward(self, indices):
         bsz = indices.shape[0]
@@ -96,8 +106,12 @@ class PolicyPARAFAC(torch.nn.Module):
             factor = self.factors[i]
             prod *= factor[idx, :]
         if indices.shape[1] < len(self.factors):
-            return torch.matmul(prod, self.factors[-1].T)
-        return torch.sum(prod, dim=-1), self.log_sigma
+            res = torch.matmul(prod, self.factors[-1].T)
+        else:
+            res = torch.sum(prod, dim=-1), self.log_sigma
+        if self.model == 'gaussian':
+            return res, self.log_sigma
+        return res
 
 
 class ValuePARAFAC(torch.nn.Module):
