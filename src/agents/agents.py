@@ -12,8 +12,6 @@ class GaussianAgent(nn.Module):
         self.actor = actor
         self.critic = critic
 
-        self.log_sigma = torch.ones(1, dtype=torch.double, requires_grad=True)
-
         self.discretizer_actor = discretizer_actor
         self.discretizer_critic = discretizer_critic
 
@@ -24,14 +22,13 @@ class GaussianAgent(nn.Module):
         if self.discretizer_actor:
             state = state.numpy().reshape(-1, len(self.discretizer_actor.buckets))
             indices = self.discretizer_actor.get_index(state)
-            mu = self.actor(indices).squeeze()
+            mu, log_sigma = self.actor(indices)
         else:
-            mu = self.actor(state).squeeze()
-        log_sigma = self.log_sigma
-        sigma = torch.exp(log_sigma)
+            mu, log_sigma = self.actor(state)
+        sigma = log_sigma.exp()
 
         # Distribution
-        pi = torch.distributions.Normal(mu, torch.diag(sigma))
+        pi = torch.distributions.Normal(mu.squeeze(), sigma.squeeze())
         return pi
 
     def evaluate_logprob(self, state: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
@@ -39,7 +36,7 @@ class GaussianAgent(nn.Module):
         dist = self.pi(state)
         action_logprob = dist.log_prob(action)
         return action_logprob.squeeze()
-    
+
     def evaluate_value(self, state: torch.Tensor) -> torch.Tensor:
         # Critic
         if self.discretizer_critic:
@@ -87,7 +84,7 @@ class SoftmaxAgent(nn.Module):
         dist = self.pi(state)
         action_logprob = dist.log_prob(action)
         return action_logprob.squeeze()
-    
+
     def evaluate_value(self, state: torch.Tensor) -> torch.Tensor:
         # Critic
         if self.discretizer_critic:
