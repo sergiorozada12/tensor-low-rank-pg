@@ -9,7 +9,10 @@ class PolicyNetwork(torch.nn.Module):
             self.layers.append(torch.nn.Linear(num_inputs, h))
             self.layers.append(torch.nn.Tanh())
             num_inputs = h
-        self.layers.append(torch.nn.Linear(num_inputs, num_outputs))
+        action_layer = torch.nn.Linear(num_inputs, num_outputs)
+        action_layer.weight.data.mul_(0.1)
+        action_layer.bias.data.mul_(0.0)
+        self.layers.append(action_layer)
 
         self.model = model
         if model == 'gaussian':
@@ -31,7 +34,10 @@ class ValueNetwork(torch.nn.Module):
             self.layers.append(torch.nn.Linear(num_inputs, h))
             self.layers.append(torch.nn.Tanh())
             num_inputs = h
-        self.layers.append(torch.nn.Linear(num_inputs, num_outputs))
+        action_layer = torch.nn.Linear(num_inputs, num_outputs)
+        action_layer.weight.data.mul_(0.1)
+        action_layer.bias.data.mul_(0.0)
+        self.layers.append(action_layer)
 
     def forward(self, x):
         for layer in self.layers:

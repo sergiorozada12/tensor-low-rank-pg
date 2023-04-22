@@ -1,5 +1,10 @@
+from typing import Tuple, List
+
 import numpy as np
+import scipy
 import torch
+from torch.nn.utils.convert_parameters import parameters_to_vector
+from torch.nn.utils.convert_parameters import vector_to_parameters
 
 from src.agents.agents import GaussianAgent, SoftmaxAgent
 from src.utils import Buffer
@@ -13,20 +18,17 @@ class ReinforceGaussianNN:
             discretizer_actor=None,
             discretizer_critic=None,
             gamma=0.99,
+            tau=0.97,
+            epochs: int=1000,
             lr_actor=1e-2,
-            lr_critic=1e-2
         ):
         self.gamma = gamma
-        self.policy = GaussianAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.tau = tau
+        self.epochs = epochs
 
-        mu_params = list(self.policy.actor.parameters())
-        std_params = [self.policy.log_sigma]
-        
-        self.opt_actor = torch.optim.Adam(mu_params + std_params, lr_actor)
-        self.opt_critic = torch.optim.Adam(self.policy.critic.parameters(), lr_critic)
-
-        self.MseLoss = torch.nn.MSELoss()
         self.buffer = Buffer()
+        self.policy = GaussianAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
         with torch.no_grad():
@@ -39,36 +41,66 @@ class ReinforceGaussianNN:
 
         return action.numpy()
 
-    def calculate_returns(self):
-        result = np.empty_like(self.buffer.rewards)
-        result[-1] = self.buffer.rewards[-1]
-        for t in range(len(self.buffer.rewards)-2, -1, -1):
-            result[t] = self.buffer.rewards[t] + self.gamma*result[t+1]
-        return result
+    def calculate_returns(self, values) -> List[float]:
+        returns = []
+        advantages=[]
+
+        prev_return = 0
+        prev_value = 0
+        prev_advantage = 0
+        for i in reversed(range(len(self.buffer.rewards))):
+            reward = self.buffer.rewards[i]
+            mask = 1 - self.buffer.terminals[i]
+
+            actual_return = reward + self.gamma*prev_return*mask
+            actual_delta = reward + self.gamma*prev_value*mask - values[i]
+            actual_advantage = actual_delta + self.gamma*self.tau*prev_advantage*mask        
+
+            returns.insert(0, actual_return)
+            advantages.insert(0, actual_advantage)
+
+            prev_return = actual_return
+            prev_value = values[i]
+            prev_advantage = actual_advantage
+
+        returns = torch.as_tensor(returns).double().detach().squeeze()
+        advantages = torch.as_tensor(advantages).double().detach().squeeze()
+        advantages = (advantages - advantages.mean())/advantages.std()
+
+        return returns, advantages
 
     def update(self):
-        returns = self.calculate_returns()
-        returns = torch.as_tensor(returns).double().detach().squeeze()
-
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
-        logprobs = self.policy.evaluate_logprob(states, actions)
 
-        state_values = self.policy.evaluate_value(states)
-        advantages = returns - state_values.detach()
+        # Critic - GAE estimation
+        values = self.policy.evaluate_value(states)
+        rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        loss_actor = -logprobs*advantages
-        loss_critic = self.MseLoss(state_values, returns)
+        def loss_critic(params):
+            vector_to_parameters(torch.tensor(params), self.policy.critic.parameters())
+            self.policy.critic.zero_grad()
 
-        # Actor
-        self.opt_actor.zero_grad()
-        loss_actor.mean().backward()
-        self.opt_actor.step()
+            values = self.policy.evaluate_value(states)
+            loss = (values - rewards).pow(2).mean()
+            loss.backward()
 
-        # Critic
-        self.opt_critic.zero_grad()
-        loss_critic.mean().backward()
-        self.opt_critic.step()
+            grads = parameters_to_vector([param.grad for param in self.policy.critic.parameters()])
+            grad_flat = torch.cat([grad.view(-1) for grad in grads]).data.double().numpy()
+            return loss.data.double().numpy(), grad_flat
+
+        # Critic - LBFGS training
+        params_critic = torch.cat([param.data.view(-1) for param in self.policy.critic.parameters()])
+        params_critic, _, _ = scipy.optimize.fmin_l_bfgs_b(loss_critic, params_critic.double().numpy(), maxiter=25)
+        vector_to_parameters(torch.tensor(params_critic), self.policy.critic.parameters())
+
+        # Actor - Stochastic Gradient Ascent
+        for _ in range(self.epochs):
+            logprobs = self.policy.evaluate_logprob(states, actions)
+            loss_actor = -logprobs*advantages
+            self.opt_actor.zero_grad()
+            loss_actor.mean().backward()
+            self.opt_actor.step()
 
         self.buffer.clear()
 
@@ -81,17 +113,17 @@ class ReinforceSoftmaxNN:
             discretizer_actor=None,
             discretizer_critic=None,
             gamma=0.99,
+            tau=0.97,
+            epochs: int=1000,
             lr_actor=1e-2,
-            lr_critic=1e-2
         ):
         self.gamma = gamma
-        self.policy = SoftmaxAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.tau = tau
+        self.epochs = epochs
 
-        self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
-        self.opt_critic = torch.optim.Adam(self.policy.critic.parameters(), lr_critic)
-
-        self.MseLoss = torch.nn.MSELoss()
         self.buffer = Buffer()
+        self.policy = SoftmaxAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
         with torch.no_grad():
@@ -104,35 +136,65 @@ class ReinforceSoftmaxNN:
 
         return action.item()
 
-    def calculate_returns(self):
-        result = np.empty_like(self.buffer.rewards)
-        result[-1] = self.buffer.rewards[-1]
-        for t in range(len(self.buffer.rewards)-2, -1, -1):
-            result[t] = self.buffer.rewards[t] + self.gamma*result[t+1]
-        return result
+    def calculate_returns(self, values) -> List[float]:
+        returns = []
+        advantages=[]
+
+        prev_return = 0
+        prev_value = 0
+        prev_advantage = 0
+        for i in reversed(range(len(self.buffer.rewards))):
+            reward = self.buffer.rewards[i]
+            mask = 1 - self.buffer.terminals[i]
+
+            actual_return = reward + self.gamma*prev_return*mask
+            actual_delta = reward + self.gamma*prev_value*mask - values[i]
+            actual_advantage = actual_delta + self.gamma*self.tau*prev_advantage*mask        
+
+            returns.insert(0, actual_return)
+            advantages.insert(0, actual_advantage)
+
+            prev_return = actual_return
+            prev_value = values[i]
+            prev_advantage = actual_advantage
+
+        returns = torch.as_tensor(returns).double().detach().squeeze()
+        advantages = torch.as_tensor(advantages).double().detach().squeeze()
+        advantages = (advantages - advantages.mean())/advantages.std()
+
+        return returns, advantages
 
     def update(self):
-        returns = self.calculate_returns()
-        returns = torch.as_tensor(returns).double().detach().squeeze()
-
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
-        logprobs = self.policy.evaluate_logprob(states, actions)
 
-        state_values = self.policy.evaluate_value(states)
-        advantages = returns - state_values.detach()
+        # Critic - GAE estimation
+        values = self.policy.evaluate_value(states)
+        rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        loss_actor = -logprobs*advantages
-        loss_critic = self.MseLoss(state_values, returns)
+        def loss_critic(params):
+            vector_to_parameters(torch.tensor(params), self.policy.critic.parameters())
+            self.policy.critic.zero_grad()
 
-        # Actor
-        self.opt_actor.zero_grad()
-        loss_actor.mean().backward()
-        self.opt_actor.step()
+            values = self.policy.evaluate_value(states)
+            loss = (values - rewards).pow(2).mean()
+            loss.backward()
 
-        # Critic
-        self.opt_critic.zero_grad()
-        loss_critic.mean().backward()
-        self.opt_critic.step()
+            grads = parameters_to_vector([param.grad for param in self.policy.critic.parameters()])
+            grad_flat = torch.cat([grad.view(-1) for grad in grads]).data.double().numpy()
+            return loss.data.double().numpy(), grad_flat
+
+        # Critic - LBFGS training
+        params_critic = torch.cat([param.data.view(-1) for param in self.policy.critic.parameters()])
+        params_critic, _, _ = scipy.optimize.fmin_l_bfgs_b(loss_critic, params_critic.double().numpy(), maxiter=25)
+        vector_to_parameters(torch.tensor(params_critic), self.policy.critic.parameters())
+
+        # Actor - Stochastic Gradient Ascent
+        for _ in range(self.epochs):
+            logprobs = self.policy.evaluate_logprob(states, actions)
+            loss_actor = -logprobs*advantages
+            self.opt_actor.zero_grad()
+            loss_actor.mean().backward()
+            self.opt_actor.step()
 
         self.buffer.clear()

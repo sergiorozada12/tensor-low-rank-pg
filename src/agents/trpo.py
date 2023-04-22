@@ -5,7 +5,6 @@ from copy import deepcopy
 import numpy as np
 import scipy
 import torch
-import torch.nn as nn
 from torch.nn.utils.convert_parameters import parameters_to_vector
 from torch.nn.utils.convert_parameters import vector_to_parameters
 
@@ -206,7 +205,7 @@ class TRPOGaussianNN:
         grads = parameters_to_vector([param.grad for param in self.policy.actor.parameters()])    
         params_actor = parameters_to_vector([param for param in self.policy.actor.parameters()])
 
-        # Actor - Conjugate Gradient Ascend
+        # Actor - Conjugate Gradient Ascent
         direction = self.conjugate_gradient(grads, states)
         direction_hessian_norm = direction.dot(self.fvp(direction, states))
         lagrange_multiplier = torch.sqrt(2*self.delta/direction_hessian_norm)
@@ -407,7 +406,7 @@ class TRPOSoftmaxNN:
         grads = parameters_to_vector([param.grad for param in self.policy.actor.parameters()])    
         params_actor = parameters_to_vector([param for param in self.policy.actor.parameters()])
 
-        # Actor - Conjugate Gradient Ascend
+        # Actor - Conjugate Gradient Ascent
         direction = self.conjugate_gradient(grads, states)
         direction_hessian_norm = direction.dot(self.fvp(direction, states))
         lagrange_multiplier = torch.sqrt(2*self.delta/direction_hessian_norm)
