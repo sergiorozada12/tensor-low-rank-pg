@@ -2,10 +2,7 @@ from typing import Tuple, List
 from copy import deepcopy
 
 import numpy as np
-import scipy
 import torch
-from torch.nn.utils.convert_parameters import parameters_to_vector
-from torch.nn.utils.convert_parameters import vector_to_parameters
 
 from src.utils import Buffer
 from src.agents.agents import GaussianAgent, SoftmaxAgent
@@ -40,6 +37,13 @@ class PPOGaussianNN:
         self.policy_old.load_state_dict(self.policy.state_dict())
 
         self.opt_actor = torch.optim.Adam(self.policy.parameters(), lr_actor)
+
+        self.opt_critic = torch.optim.LBFGS(
+            self.policy.critic.parameters(),
+            history_size=100,
+            max_iter=25,
+            line_search_fn='strong_wolfe',
+        )
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
         with torch.no_grad():
@@ -89,22 +93,14 @@ class PPOGaussianNN:
         values = self.policy.evaluate_value(old_states)
         rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        def loss_critic(params):
-            vector_to_parameters(torch.tensor(params), self.policy.critic.parameters())
-            self.policy.critic.zero_grad()
-
+        # Critic - LBFGS training
+        def closure():
+            self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(old_states)
             loss = (values - rewards).pow(2).mean()
             loss.backward()
-
-            grads = parameters_to_vector([param.grad for param in self.policy.critic.parameters()])
-            grad_flat = torch.cat([grad.view(-1) for grad in grads]).data.double().numpy()
-            return loss.data.double().numpy(), grad_flat
-
-        # Critic - LBFGS training
-        params_critic = torch.cat([param.data.view(-1) for param in self.policy.critic.parameters()])
-        params_critic, _, _ = scipy.optimize.fmin_l_bfgs_b(loss_critic, params_critic.double().numpy(), maxiter=25)
-        vector_to_parameters(torch.tensor(params_critic), self.policy.critic.parameters())
+            return loss
+        self.opt_critic.step(closure)
 
         # Actor - Stochastic Gradient Ascent
         for _ in range(self.epochs):
@@ -155,6 +151,13 @@ class PPOSoftmaxNN:
 
         self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
 
+        self.opt_critic = torch.optim.LBFGS(
+            self.policy.critic.parameters(),
+            history_size=100,
+            max_iter=25,
+            line_search_fn='strong_wolfe',
+        )
+
     def select_action(self, state: np.ndarray) -> np.ndarray:
         with torch.no_grad():
             state = torch.as_tensor(state).double()
@@ -203,22 +206,14 @@ class PPOSoftmaxNN:
         values = self.policy.evaluate_value(old_states)
         rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        def loss_critic(params):
-            vector_to_parameters(torch.tensor(params), self.policy.critic.parameters())
-            self.policy.critic.zero_grad()
-
+        # Critic - LBFGS training
+        def closure():
+            self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(old_states)
             loss = (values - rewards).pow(2).mean()
             loss.backward()
-
-            grads = parameters_to_vector([param.grad for param in self.policy.critic.parameters()])
-            grad_flat = torch.cat([grad.view(-1) for grad in grads]).data.double().numpy()
-            return loss.data.double().numpy(), grad_flat
-
-        # Critic - LBFGS training
-        params_critic = torch.cat([param.data.view(-1) for param in self.policy.critic.parameters()])
-        params_critic, _, _ = scipy.optimize.fmin_l_bfgs_b(loss_critic, params_critic.double().numpy(), maxiter=25)
-        vector_to_parameters(torch.tensor(params_critic), self.policy.critic.parameters())
+            return loss
+        self.opt_critic.step(closure)
 
         # Actor - Stochastic Gradient Ascent
         for _ in range(self.epochs):
