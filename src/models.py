@@ -63,10 +63,12 @@ class PolicyLR(torch.nn.Module):
         rows, cols = indices
         if cols is not None:
             prod = self.L[rows, :] * self.R[:, cols].T
-            return torch.sum(prod, dim=-1)
+            res = torch.sum(prod, dim=-1)
+        else:
+            res = torch.matmul(self.L[rows, :], self.R.T)
         if self.model == 'gaussian':
-            return torch.matmul(self.L[rows, :], self.R.T), self.log_sigma
-        return torch.matmul(self.L[rows, :], self.R.T)
+            return res, self.log_sigma
+        return res
 
 
 class ValueLR(torch.nn.Module):
