@@ -180,16 +180,14 @@ class TRPOGaussianNN:
                 break
         return x
 
-    def update(self):
+    def update_critic(self):
         states = torch.stack(self.buffer.states, dim=0).detach()
-        actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
-        old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
 
-        # Critic - GAE estimation
+        # GAE estimation
         values = self.policy.evaluate_value(states)
         rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        # Critic - LBFGS training
+        # LBFGS training
         def closure():
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
@@ -197,6 +195,13 @@ class TRPOGaussianNN:
             loss.backward()
             return loss
         self.opt_critic.step(closure)
+
+        return advantages
+
+    def update_actor(self, advantages):
+        states = torch.stack(self.buffer.states, dim=0).detach()
+        actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
+        old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
 
         # Actor - Gradient estimation
         self.loss_actor(states, actions, old_logprobs, advantages).backward()
@@ -222,8 +227,6 @@ class TRPOGaussianNN:
             expected_improvement)
         vector_to_parameters(params_actor, self.policy.actor.parameters())
         vector_to_parameters(params_actor, self.policy_old.actor.parameters())
-
-        self.buffer.clear()
 
 
 class TRPOSoftmaxNN:
@@ -380,16 +383,14 @@ class TRPOSoftmaxNN:
                 break
         return x
 
-    def update(self):
+    def update_critic(self):
         states = torch.stack(self.buffer.states, dim=0).detach()
-        actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
-        old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
 
-        # Critic - GAE estimation
+        # GAE estimation
         values = self.policy.evaluate_value(states)
         rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        # Critic - LBFGS training
+        # LBFGS training
         def closure():
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
@@ -397,6 +398,13 @@ class TRPOSoftmaxNN:
             loss.backward()
             return loss
         self.opt_critic.step(closure)
+
+        return advantages
+
+    def update_actor(self, advantages):
+        states = torch.stack(self.buffer.states, dim=0).detach()
+        actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
+        old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
 
         # Actor - Gradient estimation
         self.loss_actor(states, actions, old_logprobs, advantages).backward()
@@ -422,5 +430,3 @@ class TRPOSoftmaxNN:
             expected_improvement)
         vector_to_parameters(params_actor, self.policy.actor.parameters())
         vector_to_parameters(params_actor, self.policy_old.actor.parameters())
-
-        self.buffer.clear()

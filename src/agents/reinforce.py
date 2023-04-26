@@ -73,15 +73,14 @@ class ReinforceGaussianNN:
 
         return returns, advantages
 
-    def update(self):
+    def update_critic(self):
         states = torch.stack(self.buffer.states, dim=0).detach()
-        actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
 
-        # Critic - GAE estimation
+        # GAE estimation
         values = self.policy.evaluate_value(states)
         rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        # Critic - LBFGS training
+        # LBFGS training
         def closure():
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
@@ -90,15 +89,19 @@ class ReinforceGaussianNN:
             return loss
         self.opt_critic.step(closure)
 
-        # Actor - Stochastic Gradient Ascent
+        return advantages
+
+    def update_actor(self, advantages):
+        states = torch.stack(self.buffer.states, dim=0).detach()
+        actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
+
+        # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(states, actions)
             loss_actor = -logprobs*advantages
             self.opt_actor.zero_grad()
             loss_actor.mean().backward()
             self.opt_actor.step()
-
-        self.buffer.clear()
 
 
 class ReinforceSoftmaxNN:
@@ -167,15 +170,14 @@ class ReinforceSoftmaxNN:
 
         return returns, advantages
 
-    def update(self):
+    def update_critic(self):
         states = torch.stack(self.buffer.states, dim=0).detach()
-        actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
 
-        # Critic - GAE estimation
+        # GAE estimation
         values = self.policy.evaluate_value(states)
         rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        # Critic - LBFGS training
+        # LBFGS training
         def closure():
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
@@ -184,12 +186,16 @@ class ReinforceSoftmaxNN:
             return loss
         self.opt_critic.step(closure)
 
-        # Actor - Stochastic Gradient Ascent
+        return advantages
+
+    def update_actor(self, advantages):
+        states = torch.stack(self.buffer.states, dim=0).detach()
+        actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
+
+        # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(states, actions)
             loss_actor = -logprobs*advantages
             self.opt_actor.zero_grad()
             loss_actor.mean().backward()
             self.opt_actor.step()
-
-        self.buffer.clear()

@@ -84,25 +84,30 @@ class PPOGaussianNN:
 
         return returns, advantages
 
-    def update(self):
-        old_states = torch.stack(self.buffer.states, dim=0).detach()
-        old_actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
-        old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
+    def update_critic(self):
+        states = torch.stack(self.buffer.states, dim=0).detach()
 
-        # Critic - GAE estimation
-        values = self.policy.evaluate_value(old_states)
+        # GAE estimation
+        values = self.policy.evaluate_value(states)
         rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        # Critic - LBFGS training
+        # LBFGS training
         def closure():
             self.opt_critic.zero_grad()
-            values = self.policy.evaluate_value(old_states)
+            values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
             loss.backward()
             return loss
         self.opt_critic.step(closure)
 
-        # Actor - Stochastic Gradient Ascent
+        return advantages
+
+    def update_actor(self, advantages):
+        old_states = torch.stack(self.buffer.states, dim=0).detach()
+        old_actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
+        old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
+
+        # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(old_states, old_actions)
             ratio = torch.exp(logprobs - old_logprobs)
@@ -118,7 +123,6 @@ class PPOGaussianNN:
             self.opt_actor.step()
 
         self.policy_old.load_state_dict(self.policy.state_dict())
-        self.buffer.clear()
 
 
 class PPOSoftmaxNN:
@@ -197,25 +201,30 @@ class PPOSoftmaxNN:
 
         return returns, advantages
 
-    def update(self):
-        old_states = torch.stack(self.buffer.states, dim=0).detach()
-        old_actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
-        old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
+    def update_critic(self):
+        states = torch.stack(self.buffer.states, dim=0).detach()
 
-        # Critic - GAE estimation
-        values = self.policy.evaluate_value(old_states)
+        # GAE estimation
+        values = self.policy.evaluate_value(states)
         rewards, advantages = self.calculate_returns(values.data.numpy())
 
-        # Critic - LBFGS training
+        # LBFGS training
         def closure():
             self.opt_critic.zero_grad()
-            values = self.policy.evaluate_value(old_states)
+            values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
             loss.backward()
             return loss
         self.opt_critic.step(closure)
 
-        # Actor - Stochastic Gradient Ascent
+        return advantages
+
+    def update_actor(self, advantages):
+        old_states = torch.stack(self.buffer.states, dim=0).detach()
+        old_actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
+        old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
+
+        # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(old_states, old_actions)
             ratio = torch.exp(logprobs - old_logprobs)
@@ -231,4 +240,3 @@ class PPOSoftmaxNN:
             self.opt_actor.step()
 
         self.policy_old.load_state_dict(self.policy.state_dict())
-        self.buffer.clear()
