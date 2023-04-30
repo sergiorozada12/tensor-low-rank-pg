@@ -22,7 +22,7 @@ class PolicyNetwork(torch.nn.Module):
         for layer in self.layers:
             x = layer(x)
         if self.model == 'gaussian':
-            return x, self.log_sigma
+            return x, torch.clamp(self.log_sigma, min=-2.0, max=0.0)
         return x
 
 
@@ -70,7 +70,7 @@ class PolicyLR(torch.nn.Module):
         else:
             res = torch.matmul(self.L[rows, :], self.R.T)
         if self.model == 'gaussian':
-            return res, self.log_sigma
+            return res, torch.clamp(self.log_sigma, min=-2.5, max=0.0)
         return res
 
 
@@ -127,7 +127,7 @@ class PolicyPARAFAC(torch.nn.Module):
         else:
             res = torch.sum(prod, dim=-1), self.log_sigma
         if self.model == 'gaussian':
-            return res, self.log_sigma
+            return res, torch.clamp(self.log_sigma, min=-2.5, max=0.0)
         return res
 
 
