@@ -98,7 +98,7 @@ class ValueLR(torch.nn.Module):
 class PolicyPARAFAC(torch.nn.Module):
     def __init__(self, dims, k, scale=1.0, model='gaussian'):
         super().__init__()
-        
+
         self.k = k
         self.n_factors = len(dims)
 
@@ -125,7 +125,7 @@ class PolicyPARAFAC(torch.nn.Module):
         if indices.shape[1] < len(self.factors):
             res = torch.matmul(prod, self.factors[-1].T)
         else:
-            res = torch.sum(prod, dim=-1), self.log_sigma
+            res = torch.sum(prod, dim=-1)
         if self.model == 'gaussian':
             return res, torch.clamp(self.log_sigma, min=-2.5, max=0.0)
         return res
@@ -134,7 +134,7 @@ class PolicyPARAFAC(torch.nn.Module):
 class ValuePARAFAC(torch.nn.Module):
     def __init__(self, dims, k, scale=1.0):
         super().__init__()
-        
+
         self.k = k
         self.n_factors = len(dims)
 

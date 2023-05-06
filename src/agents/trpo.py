@@ -159,7 +159,7 @@ class TRPOGaussianNN:
         grad_vector_dot = grad_kl.dot(vector)
         fisher_vector_product = torch.autograd.grad(grad_vector_dot, self.policy.actor.parameters())
         fisher_vector_product = torch.cat([out.view(-1) for out in fisher_vector_product]).detach()
-        
+
         return fisher_vector_product + self.cg_dampening*vector.detach()
 
     def conjugate_gradient(self, b, states):    
@@ -167,7 +167,7 @@ class TRPOGaussianNN:
         d = b.clone()
         r = b.clone()
         rr = r.dot(r)
-        for i in range(self.cg_iteration):
+        for _ in range(self.cg_iteration):
             Hd = self.fvp(d, states)
             alpha = rr / d.dot(Hd)
             x = x + alpha * d
@@ -362,7 +362,7 @@ class TRPOSoftmaxNN:
         grad_vector_dot = grad_kl.dot(vector)
         fisher_vector_product = torch.autograd.grad(grad_vector_dot, self.policy.actor.parameters())
         fisher_vector_product = torch.cat([out.view(-1) for out in fisher_vector_product]).detach()
-        
+
         return fisher_vector_product + self.cg_dampening*vector.detach()
 
     def conjugate_gradient(self, b, states):    
@@ -370,7 +370,7 @@ class TRPOSoftmaxNN:
         d = b.clone()
         r = b.clone()
         rr = r.dot(r)
-        for i in range(self.cg_iteration):
+        for _ in range(self.cg_iteration):
             Hd = self.fvp(d, states)
             alpha = rr / d.dot(Hd)
             x = x + alpha * d
