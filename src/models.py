@@ -59,9 +59,6 @@ class PolicyLR(torch.nn.Module):
         if model == 'gaussian':
             self.log_sigma = torch.nn.Parameter(torch.zeros(1))
 
-        for param in self.parameters():
-            param.requires_grad = False
-
     def forward(self, indices):
         rows, cols = indices
         if cols is not None:
@@ -83,9 +80,6 @@ class ValueLR(torch.nn.Module):
 
         self.L = torch.nn.Parameter(L)
         self.R = torch.nn.Parameter(R)
-
-        for param in self.parameters():
-            param.requires_grad = False
 
     def forward(self, indices):
         rows, cols = indices
@@ -111,9 +105,6 @@ class PolicyPARAFAC(torch.nn.Module):
         self.model = model
         if model == 'gaussian':
             self.log_sigma = torch.nn.Parameter(torch.zeros(1))
-
-        for param in self.parameters():
-            param.requires_grad = False
 
     def forward(self, indices):
         bsz = indices.shape[0]
@@ -143,9 +134,6 @@ class ValuePARAFAC(torch.nn.Module):
             factor = scale*torch.randn(dim, k, dtype=torch.double, requires_grad=True)
             factors.append(torch.nn.Parameter(factor))
         self.factors = torch.nn.ParameterList(factors)
-
-        for param in self.parameters():
-            param.requires_grad = False
 
     def forward(self, indices):
         bsz = indices.shape[0]

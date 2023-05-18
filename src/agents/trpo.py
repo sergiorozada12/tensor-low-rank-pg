@@ -10,7 +10,6 @@ from torch.nn.utils.convert_parameters import vector_to_parameters
 from src.utils import Buffer
 from src.agents.agents import GaussianAgent, SoftmaxAgent
 
-
 class TRPOGaussianNN:
     def __init__(
         self,
@@ -92,8 +91,12 @@ class TRPOGaussianNN:
         if self.discretizer_actor:
             states = states.numpy().reshape(-1, len(self.discretizer_actor.buckets))
             indices = self.discretizer_actor.get_index(states)
-            mu1, log_sigma1 = self.policy_old.actor(indices).detach().unsqueeze(1)
-            mu2, log_sigma2 = self.policy.actor(indices).unsqueeze(1)
+            mu1, log_sigma1 = self.policy_old.actor(indices)
+            mu2, log_sigma2 = self.policy.actor(indices)
+
+            mu1 = mu1.detach().unsqueeze(1)
+            mu2 = mu2.unsqueeze(1)
+            log_sigma1 = log_sigma1.detach()
         else:
             mu1, log_sigma1 = self.policy_old.actor(states)
             mu2, log_sigma2 = self.policy.actor(states)
@@ -124,6 +127,7 @@ class TRPOGaussianNN:
         old_logprobs,
         advantages,
         params,
+        params_flat,
         gradients,
         expected_improve_rate,
         max_backtracks=10,
@@ -134,8 +138,8 @@ class TRPOGaussianNN:
 
         weights = 0.5**np.arange(max_backtracks)
         for weight in weights:
-            params_new = params + weight*gradients
-            vector_to_parameters(params_new, self.policy.actor.parameters())
+            params_new = params_flat + weight*gradients
+            vector_to_parameters(params_new, params)
 
             with torch.no_grad():
                 loss_new = self.loss_actor(states, actions, old_logprobs, advantages)
@@ -146,41 +150,50 @@ class TRPOGaussianNN:
 
             if ratio.item() > accept_ratio and actual_improve.item() > 0:
                 return params_new
-        return params
+        return params_flat
 
-    def fvp(self, vector, states):
+    def fvp(self, vector, states, params):
         vector = vector.clone().requires_grad_()
 
         self.policy.actor.zero_grad()
         kl_penalty = self.kl_penalty(states)
-        grad_kl = torch.autograd.grad(kl_penalty, self.policy.actor.parameters(), create_graph=True)
+        grad_kl = torch.autograd.grad(kl_penalty, params, create_graph=True)
+        
         grad_kl = torch.cat([grad.view(-1) for grad in grad_kl])
 
         grad_vector_dot = grad_kl.dot(vector)
-        fisher_vector_product = torch.autograd.grad(grad_vector_dot, self.policy.actor.parameters())
+        fisher_vector_product = torch.autograd.grad(grad_vector_dot, params)
         fisher_vector_product = torch.cat([out.view(-1) for out in fisher_vector_product]).detach()
 
         return fisher_vector_product + self.cg_dampening*vector.detach()
 
-    def conjugate_gradient(self, b, states):    
+    def conjugate_gradient(self, b, states, params):    
         x = torch.zeros(*b.shape)
         d = b.clone()
         r = b.clone()
         rr = r.dot(r)
         for _ in range(self.cg_iteration):
-            Hd = self.fvp(d, states)
-            alpha = rr / d.dot(Hd)
+            Hd = self.fvp(d, states, params)
+            alpha = rr / (d.dot(Hd) + 1e-10)
             x = x + alpha * d
             r = r - alpha * Hd
             rr_new = r.dot(r)
-            beta = rr_new / rr
+            beta = rr_new / (rr + 1e-10)
             d = r + beta * d
             rr = rr_new
             if rr < self.cg_tolerance:
                 break
         return x
 
-    def update_critic(self):
+    def zero_grad(self, model, idx=None):
+        if idx is None:
+            return
+
+        for i, param in enumerate(model.parameters()):
+            if i != idx:
+                param.grad.zero_()
+
+    def update_critic(self, idx=None):
         states = torch.stack(self.buffer.states, dim=0).detach()
 
         # GAE estimation
@@ -193,40 +206,51 @@ class TRPOGaussianNN:
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
             loss.backward()
+            self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 
         return advantages
 
-    def update_actor(self, advantages):
+    def update_actor(self, advantages, idx=None):
+        params = list(self.policy.actor.parameters())
+        params_old = list(self.policy_old.actor.parameters())
+        if idx is not None:
+            params = [params[idx]]
+            params_old = [params_old[idx]]
+
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
         old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
 
         # Actor - Gradient estimation
         self.loss_actor(states, actions, old_logprobs, advantages).backward()
-        grads = parameters_to_vector([param.grad for param in self.policy.actor.parameters()])    
-        params_actor = parameters_to_vector([param for param in self.policy.actor.parameters()])
+        self.zero_grad(self.policy.actor, idx)
+
+        grads = parameters_to_vector([param.grad for param in params])
+        params_flat = parameters_to_vector([param for param in params])
 
         # Actor - Conjugate Gradient Ascent
-        direction = self.conjugate_gradient(grads, states)
-        direction_hessian_norm = direction.dot(self.fvp(direction, states))
-        lagrange_multiplier = torch.sqrt(2*self.delta/direction_hessian_norm)
+        direction = self.conjugate_gradient(grads, states, params)
+        direction_hessian_norm = direction.dot(self.fvp(direction, states, params))
+        lagrange_multiplier = torch.sqrt(2*self.delta/(direction_hessian_norm + 1e-10))
 
         grads_opt = lagrange_multiplier*direction
 
         # Actor - Line search backtracking
         expected_improvement = grads.dot(grads_opt)
-        params_actor = self.line_search(
+        params_flat = self.line_search(
             states,
             actions,
             old_logprobs,
             advantages,
-            params_actor,
+            params,
+            params_flat,
             grads_opt,
-            expected_improvement)
-        vector_to_parameters(params_actor, self.policy.actor.parameters())
-        vector_to_parameters(params_actor, self.policy_old.actor.parameters())
+            expected_improvement
+        )
+        vector_to_parameters(params_flat, params)
+        vector_to_parameters(params_flat, params_old)
 
 
 class TRPOSoftmaxNN:
@@ -327,6 +351,7 @@ class TRPOSoftmaxNN:
         old_logprobs,
         advantages,
         params,
+        params_flat,
         gradients,
         expected_improve_rate,
         max_backtracks=10,
@@ -337,8 +362,8 @@ class TRPOSoftmaxNN:
 
         weights = 0.5**np.arange(max_backtracks)
         for weight in weights:
-            params_new = params + weight*gradients
-            vector_to_parameters(params_new, self.policy.actor.parameters())
+            params_new = params_flat + weight*gradients
+            vector_to_parameters(params_new, params)
 
             with torch.no_grad():
                 loss_new = self.loss_actor(states, actions, old_logprobs, advantages)
@@ -349,41 +374,50 @@ class TRPOSoftmaxNN:
 
             if ratio.item() > accept_ratio and actual_improve.item() > 0:
                 return params_new
-        return params
+        return params_flat
 
-    def fvp(self, vector, states):
+    def fvp(self, vector, states, params):
         vector = vector.clone().requires_grad_()
 
         self.policy.actor.zero_grad()
         kl_penalty = self.kl_penalty(states)
-        grad_kl = torch.autograd.grad(kl_penalty, self.policy.actor.parameters(), create_graph=True)
+        grad_kl = torch.autograd.grad(kl_penalty, params, create_graph=True)
+        
         grad_kl = torch.cat([grad.view(-1) for grad in grad_kl])
 
         grad_vector_dot = grad_kl.dot(vector)
-        fisher_vector_product = torch.autograd.grad(grad_vector_dot, self.policy.actor.parameters())
+        fisher_vector_product = torch.autograd.grad(grad_vector_dot, params)
         fisher_vector_product = torch.cat([out.view(-1) for out in fisher_vector_product]).detach()
 
         return fisher_vector_product + self.cg_dampening*vector.detach()
 
-    def conjugate_gradient(self, b, states):    
+    def conjugate_gradient(self, b, states, params):    
         x = torch.zeros(*b.shape)
         d = b.clone()
         r = b.clone()
         rr = r.dot(r)
         for _ in range(self.cg_iteration):
-            Hd = self.fvp(d, states)
-            alpha = rr / d.dot(Hd)
+            Hd = self.fvp(d, states, params)
+            alpha = rr / (d.dot(Hd) + 1e-10)
             x = x + alpha * d
             r = r - alpha * Hd
             rr_new = r.dot(r)
-            beta = rr_new / rr
+            beta = rr_new / (rr + 1e-10)
             d = r + beta * d
             rr = rr_new
             if rr < self.cg_tolerance:
                 break
         return x
 
-    def update_critic(self):
+    def zero_grad(self, model, idx=None):
+        if idx is None:
+            return
+
+        for i, param in enumerate(model.parameters()):
+            if i != idx:
+                param.grad.zero_()
+
+    def update_critic(self, idx=None):
         states = torch.stack(self.buffer.states, dim=0).detach()
 
         # GAE estimation
@@ -396,37 +430,48 @@ class TRPOSoftmaxNN:
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
             loss.backward()
+            self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 
         return advantages
 
-    def update_actor(self, advantages):
+    def update_actor(self, advantages, idx=None):
+        params = list(self.policy.actor.parameters())
+        params_old = list(self.policy_old.actor.parameters())
+        if idx is not None:
+            params = [params[idx]]
+            params_old = [params_old[idx]]
+
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
         old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
 
         # Actor - Gradient estimation
         self.loss_actor(states, actions, old_logprobs, advantages).backward()
-        grads = parameters_to_vector([param.grad for param in self.policy.actor.parameters()])    
-        params_actor = parameters_to_vector([param for param in self.policy.actor.parameters()])
+        self.zero_grad(self.policy.actor, idx)
+
+        grads = parameters_to_vector([param.grad for param in params])
+        params_flat = parameters_to_vector([param for param in params])
 
         # Actor - Conjugate Gradient Ascent
-        direction = self.conjugate_gradient(grads, states)
-        direction_hessian_norm = direction.dot(self.fvp(direction, states))
-        lagrange_multiplier = torch.sqrt(2*self.delta/direction_hessian_norm)
+        direction = self.conjugate_gradient(grads, states, params)
+        direction_hessian_norm = direction.dot(self.fvp(direction, states, params))
+        lagrange_multiplier = torch.sqrt(2*self.delta/(direction_hessian_norm + 1e-10))
 
         grads_opt = lagrange_multiplier*direction
 
         # Actor - Line search backtracking
         expected_improvement = grads.dot(grads_opt)
-        params_actor = self.line_search(
+        params_flat = self.line_search(
             states,
             actions,
             old_logprobs,
             advantages,
-            params_actor,
+            params,
+            params_flat,
             grads_opt,
-            expected_improvement)
-        vector_to_parameters(params_actor, self.policy.actor.parameters())
-        vector_to_parameters(params_actor, self.policy_old.actor.parameters())
+            expected_improvement
+        )
+        vector_to_parameters(params_flat, params)
+        vector_to_parameters(params_flat, params_old)

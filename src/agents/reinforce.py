@@ -73,7 +73,15 @@ class ReinforceGaussianNN:
 
         return returns, advantages
 
-    def update_critic(self):
+    def zero_grad(self, model, idx=None):
+        if idx is None:
+            return
+
+        for i, param in enumerate(model.parameters()):
+            if i != idx:
+                param.grad.zero_()
+
+    def update_critic(self, idx=None):
         states = torch.stack(self.buffer.states, dim=0).detach()
 
         # GAE estimation
@@ -86,12 +94,13 @@ class ReinforceGaussianNN:
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
             loss.backward()
+            self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 
         return advantages
 
-    def update_actor(self, advantages):
+    def update_actor(self, advantages, idx=None):
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
 
@@ -101,6 +110,7 @@ class ReinforceGaussianNN:
             loss_actor = -logprobs*advantages
             self.opt_actor.zero_grad()
             loss_actor.mean().backward()
+            self.zero_grad(self.policy.actor, idx)
             self.opt_actor.step()
 
 
@@ -170,7 +180,15 @@ class ReinforceSoftmaxNN:
 
         return returns, advantages
 
-    def update_critic(self):
+    def zero_grad(self, model, idx=None):
+        if idx is None:
+            return
+
+        for i, param in enumerate(model.parameters()):
+            if i != idx:
+                param.grad.zero_()
+
+    def update_critic(self, idx=None):
         states = torch.stack(self.buffer.states, dim=0).detach()
 
         # GAE estimation
@@ -183,12 +201,13 @@ class ReinforceSoftmaxNN:
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
             loss.backward()
+            self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 
         return advantages
 
-    def update_actor(self, advantages):
+    def update_actor(self, advantages, idx=None):
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
 
@@ -198,4 +217,5 @@ class ReinforceSoftmaxNN:
             loss_actor = -logprobs*advantages
             self.opt_actor.zero_grad()
             loss_actor.mean().backward()
+            self.zero_grad(self.policy.actor, idx)
             self.opt_actor.step()

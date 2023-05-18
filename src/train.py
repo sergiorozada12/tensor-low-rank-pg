@@ -2,23 +2,25 @@ from typing import Tuple
 
 
 class Trainer:
-    def __init__(self, model):
-        self.model = model
-        
+    def __init__(self, actor_opt, critic_opt):
+        self.actor_opt = actor_opt
+        self.critic_opt = critic_opt
+
     def _update(self, agent):
-        if self.model == 'nn':
-            advantages = agent.update_critic()
-            agent.update_actor(advantages)
+        if self.actor_opt == 'bcd':
+            n_params_critic = len(list(agent.policy.critic.parameters()))
+            for i in range(n_params_critic):
+                advantages = agent.update_critic(i)
         else:
-            for param in agent.policy.critic.parameters():
-                param.requires_grad = True
-                advantages = agent.update_critic()
-                param.requires_grad = False
-                
-            for param in agent.policy.actor.parameters():
-                param.requires_grad = True
-                agent.update_actor(advantages)
-                param.requires_grad = False
+            advantages = agent.update_critic()
+
+        if self.critic_opt == 'bcd':
+            n_params_actor = len(list(agent.policy.actor.parameters()))
+            for i in range(n_params_actor):
+                agent.update_actor(advantages, i)
+        else:
+            agent.update_actor(advantages)
+
         agent.buffer.clear()
 
     def train(
