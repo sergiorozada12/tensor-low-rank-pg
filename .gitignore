@@ -1,4 +1,12 @@
+results/
+figures/
+*.out
+test*
+*.pth
+archivo_salida.txt
+
 *.ipynb
+*.pkl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
