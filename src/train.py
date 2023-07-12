@@ -29,7 +29,8 @@ class Trainer:
         agent,
         epochs: int,
         max_steps: int,
-        update_freq: int
+        update_freq: int,
+        initial_offset: int,
     ):
         returns = []
         timesteps = []
@@ -48,7 +49,7 @@ class Trainer:
                 agent.buffer.terminals.append(done)
                 cum_reward += reward
 
-                if len(agent.buffer) == update_freq:
+                if len(agent.buffer) >= update_freq and epoch > initial_offset:
                     self._update(agent)
 
                 if done:
