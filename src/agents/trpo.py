@@ -331,7 +331,8 @@ class TRPOSoftmaxNN:
 
     def kl_penalty(self, states, actions, old_logprobs):
         logprobs = self.policy.evaluate_logprob(states, actions)
-        return torch.nn.functional.kl_div(logprobs, old_logprobs, log_target=True)
+        kl = torch.nn.functional.kl_div(logprobs, old_logprobs, log_target=True)   
+        return kl
 
     def loss_actor(
             self,
@@ -376,11 +377,11 @@ class TRPOSoftmaxNN:
                 return params_new
         return params_flat
 
-    def fvp(self, vector, states, params):
+    def fvp(self, vector, states, params,actions, old_logprobs):
         vector = vector.clone().requires_grad_()
 
         self.policy.actor.zero_grad()
-        kl_penalty = self.kl_penalty(states)
+        kl_penalty = self.kl_penalty(states,actions, old_logprobs)
         grad_kl = torch.autograd.grad(kl_penalty, params, create_graph=True)
         
         grad_kl = torch.cat([grad.view(-1) for grad in grad_kl])
@@ -391,13 +392,13 @@ class TRPOSoftmaxNN:
 
         return fisher_vector_product + self.cg_dampening*vector.detach()
 
-    def conjugate_gradient(self, b, states, params):    
+    def conjugate_gradient(self, b, states, params,actions, old_logprobs):    
         x = torch.zeros(*b.shape)
         d = b.clone()
         r = b.clone()
         rr = r.dot(r)
         for _ in range(self.cg_iteration):
-            Hd = self.fvp(d, states, params)
+            Hd = self.fvp(d, states, params,actions, old_logprobs)
             alpha = rr / (d.dot(Hd) + 1e-10)
             x = x + alpha * d
             r = r - alpha * Hd
@@ -439,6 +440,7 @@ class TRPOSoftmaxNN:
     def update_actor(self, advantages, idx=None):
         params = list(self.policy.actor.parameters())
         params_old = list(self.policy_old.actor.parameters())
+
         if idx is not None:
             params = [params[idx]]
             params_old = [params_old[idx]]
@@ -455,8 +457,8 @@ class TRPOSoftmaxNN:
         params_flat = parameters_to_vector([param for param in params])
 
         # Actor - Conjugate Gradient Ascent
-        direction = self.conjugate_gradient(grads, states, params)
-        direction_hessian_norm = direction.dot(self.fvp(direction, states, params))
+        direction = self.conjugate_gradient(grads, states, params,actions, old_logprobs)
+        direction_hessian_norm = direction.dot(self.fvp(direction, states, params,actions, old_logprobs))
         lagrange_multiplier = torch.sqrt(2*self.delta/(direction_hessian_norm + 1e-10))
 
         grads_opt = lagrange_multiplier*direction
