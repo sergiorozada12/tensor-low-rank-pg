@@ -17,6 +17,34 @@ if __name__ == "__main__":
     env = gym.make('Pendulum-v1', g=9.81)
     num_experiments = 100
 
+    discretizer_actor_matrix = utils.Discretizer(
+        min_points= [-1, -1, -8],
+        max_points= [1, 1, 8],
+        buckets= [10, 10, 10],
+        dimensions= [[0],[1 ,2]]
+    )
+
+    discretizer_critic_matrix = utils.Discretizer(
+        min_points= [-1, -1, -8],
+        max_points= [1, 1, 8],
+        buckets= [16, 16, 10],
+        dimensions= [[0],[1 ,2]]
+    )
+
+    discretizer_actor_tensor = utils.Discretizer(
+        [-1, -1, -8],
+        [1, 1, 8],
+        [10, 10, 16]
+    )
+
+    discretizer_critic_tensor = utils.Discretizer(
+        [-1, -1, -8],
+        [1, 1, 8], 
+        [16, 16, 16]
+    )
+
+    Trainer = train.Trainer("sgd", "sgd")
+
     #RREINFORCE
     for _ in range(num_experiments):
         #NN
@@ -31,7 +59,6 @@ if __name__ == "__main__":
             lr_actor=1e-5
         )
 
-        Trainer = train.Trainer("sgd", "sgd")
         _, totals,_ = Trainer.train(
             env, 
             agent, 
@@ -45,41 +72,27 @@ if __name__ == "__main__":
 
         #Matrix
 
-        discretizer_actor = utils.Discretizer(
-            min_points= [-1, -1, -8],
-            max_points= [1, 1, 8],
-            buckets= [10, 10, 10],
-            dimensions= [[0],[1 ,2]]
-        )
-        discretizer_critic = utils.Discretizer(
-            min_points= [-1, -1, -8],
-            max_points= [1, 1, 8],
-            buckets= [16, 16, 10],
-            dimensions= [[0],[1 ,2]]
-        )
-
         actor = models.PolicyLR(
-            n=discretizer_actor.N, 
-            m=discretizer_actor.M, 
+            n=discretizer_actor_matrix.N, 
+            m=discretizer_actor_matrix.M, 
             k=4
         )
         critc = models.ValueLR(
-            n=discretizer_critic.N, 
-            m=discretizer_critic.M, 
+            n=discretizer_critic_matrix.N, 
+            m=discretizer_critic_matrix.M, 
             k=4
         )
 
         agent = reinforce.ReinforceGaussianNN(
             actor, 
             critc,
-            discretizer_actor= discretizer_actor,
-            discretizer_critic=discretizer_critic, 
+            discretizer_actor= discretizer_actor_matrix,
+            discretizer_critic=discretizer_critic_matrix, 
             gamma=.9, 
             tau=.9, 
             lr_actor=1e-5
         )
 
-        Trainer = train.Trainer("sgd", "sgd")
         _, totals,_ = Trainer.train(
             env, 
             agent, 
@@ -92,17 +105,6 @@ if __name__ == "__main__":
         res_matrix_reinforce.append(totals)
         
         #Tensor
-       
-        discretizer_actor = utils.Discretizer(
-            [-1, -1, -8],
-            [1, 1, 8],
-            [10, 10, 16]
-        )
-        discretizer_critic = utils.Discretizer(
-            [-1, -1, -8],
-            [1, 1, 8], 
-            [16, 16, 16]
-        )
 
         actor = models.PolicyPARAFAC(
             [10, 10, 16], 
@@ -116,13 +118,13 @@ if __name__ == "__main__":
         agent = reinforce.ReinforceGaussianNN(
             actor, 
             critc,
-            discretizer_actor= discretizer_actor,
-            discretizer_critic=discretizer_critic, 
+            discretizer_actor= discretizer_actor_tensor,
+            discretizer_critic=discretizer_critic_tensor, 
             gamma=.9, 
             tau=.9, 
             lr_actor=1e-5
         )
-        Trainer = train.Trainer("sgd", "sgd")
+        
         _, totals,_ = Trainer.train(
             env, 
             agent, 
@@ -153,7 +155,7 @@ if __name__ == "__main__":
             cg_tolerance=1e-10,
             cg_iteration=10)
 
-        Trainer = train.Trainer("sgd", "sgd")
+        
         _, totals,_ = Trainer.train(
             env, 
             agent, 
@@ -167,35 +169,22 @@ if __name__ == "__main__":
 
         #Matrix
 
-        discretizer_actor = utils.Discretizer(
-            min_points= [-1, -1, -8],
-            max_points= [1, 1, 8],
-            buckets= [10, 10, 10],
-            dimensions= [[0],[1 ,2]]
-        )
-        discretizer_critic = utils.Discretizer(
-            min_points= [-1, -1, -8],
-            max_points= [1, 1, 8],
-            buckets= [16, 16, 10],
-            dimensions= [[0],[1 ,2]]
-        )
-
         actor = models.PolicyLR(
-            n=discretizer_actor.N, 
-            m=discretizer_actor.M, 
+            n=discretizer_actor_matrix.N, 
+            m=discretizer_actor_matrix.M, 
             k=4
         )
         critc = models.ValueLR(
-            n=discretizer_critic.N, 
-            m=discretizer_critic.M, 
+            n=discretizer_critic_matrix.N, 
+            m=discretizer_critic_matrix.M, 
             k=4
         )
 
         agent = trpo.TRPOGaussianNN(
             actor, 
             critc, 
-            discretizer_actor= discretizer_actor,
-            discretizer_critic=discretizer_critic, 
+            discretizer_actor= discretizer_actor_matrix,
+            discretizer_critic=discretizer_critic_matrix, 
             gamma=.9, 
             tau=.9, 
             delta=.05, 
@@ -204,7 +193,7 @@ if __name__ == "__main__":
             cg_iteration=10
         )
 
-        Trainer = train.Trainer("sgd", "sgd")
+        
         _, totals,_ = Trainer.train(
             env, 
             agent, 
@@ -218,17 +207,6 @@ if __name__ == "__main__":
         
         #Tensor
 
-        discretizer_actor = utils.Discretizer(
-            [-1, -1, -8],
-            [1, 1, 8],
-            [10, 10, 10]
-        )
-        discretizer_critic = utils.Discretizer(
-            [-1, -1, -8],
-            [1, 1, 8],
-            [16, 16, 10]
-        )
-
         actor = models.PolicyPARAFAC(
             [10, 10, 10], 
             k=8
@@ -241,8 +219,8 @@ if __name__ == "__main__":
         agent = trpo.TRPOGaussianNN(
             actor, 
             critc, 
-            discretizer_actor= discretizer_actor,
-            discretizer_critic=discretizer_critic, 
+            discretizer_actor= discretizer_actor_tensor,
+            discretizer_critic=discretizer_critic_tensor, 
             gamma=.9 ,
             tau=.9, 
             delta=.05, 
@@ -251,7 +229,7 @@ if __name__ == "__main__":
             cg_iteration=10
         )
 
-        Trainer = train.Trainer("sgd", "sgd")
+        
         _, totals,_ = Trainer.train(
             env, 
             agent, 
@@ -279,17 +257,17 @@ if __name__ == "__main__":
         )
 
         actor = models.PolicyLR(
-            n=discretizer_actor.N, 
-            m=discretizer_actor.M, 
+            n=discretizer_actor_matrix.N, 
+            m=discretizer_actor_matrix.M, 
             k=4
         )
         critc = models.ValueLR(
-            n=discretizer_critic.N, 
-            m=discretizer_critic.M, 
+            n=discretizer_critic_matrix.N, 
+            m=discretizer_critic_matrix.M, 
             k=4
         )
 
-        Trainer = train.Trainer("sgd", "sgd")
+        
         _, totals,_ = Trainer.train(
             env, 
             agent, 
@@ -302,25 +280,12 @@ if __name__ == "__main__":
         res_nn_PPO.append(totals)
 
         #Matrix
-        discretizer_actor = utils.Discretizer(
-            min_points= [-1, -1, -8],
-            max_points= [1, 1, 8],
-            buckets= [10, 10, 10],
-            dimensions= [[0],[1 ,2]]
-        )
-        discretizer_critic = utils.Discretizer(
-            min_points= [-1, -1, -8],
-            max_points= [1, 1, 8],
-            buckets= [16, 16, 10],
-            dimensions= [[0],[1 ,2]]
-        )
-
         
         agent = ppo.PPOGaussianNN(
             actor, 
             critc,
-            discretizer_actor= discretizer_actor,
-            discretizer_critic=discretizer_critic, 
+            discretizer_actor= discretizer_actor_matrix,
+            discretizer_critic=discretizer_critic_matrix, 
             gamma=.9, 
             tau=.9, 
             lr_actor=1e-5, 
@@ -328,7 +293,7 @@ if __name__ == "__main__":
             eps_clip=0.2)
 
 
-        Trainer = train.Trainer("sgd", "sgd")
+        
         _, totals,_ = Trainer.train(
             env, 
             agent, 
@@ -342,17 +307,6 @@ if __name__ == "__main__":
         
         #Tensor
 
-        discretizer_actor = utils.Discretizer(
-            [-1, -1, -8],
-            [1, 1, 8],
-            [10, 10, 10]
-        )
-        discretizer_critic = utils.Discretizer(
-            [-1, -1, -8],
-            [1, 1, 8],
-            [16, 16, 10]
-        )
-
         actor = models.PolicyPARAFAC(
             [10, 10, 10], 
             k=8
@@ -365,8 +319,8 @@ if __name__ == "__main__":
         agent = ppo.PPOGaussianNN(
             actor,
             critc,
-            discretizer_actor= discretizer_actor,
-            discretizer_critic=discretizer_critic, 
+            discretizer_actor= discretizer_actor_tensor,
+            discretizer_critic=discretizer_actor_tensor, 
             gamma=.9, 
             tau=.9, 
             lr_actor=1e-5, 
@@ -374,7 +328,7 @@ if __name__ == "__main__":
             eps_clip=0.2
         )
 
-        Trainer = train.Trainer("sgd", "sgd")
+
         _, totals,_ = Trainer.train(
             env, 
             agent, 
