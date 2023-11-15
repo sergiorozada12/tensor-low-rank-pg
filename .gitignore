@@ -1,3 +1,10 @@
+results/
+figures/
+*.out
+test*
+*.pth
+archivo_salida.txt
+
 *.ipynb
 *.pkl
 
