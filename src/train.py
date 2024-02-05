@@ -36,11 +36,13 @@ class Trainer:
         timesteps = []
         for epoch in range(epochs):
             state, _ = env.reset()
+            state = state.flatten()
             cum_reward = 0
 
             for t in range(max_steps):
                 action = agent.select_action(state)
                 state_next, reward, done, _, _ = env.step(action)
+                state_next = state_next.flatten()
 
                 if t + 1 == max_steps:
                     done = True

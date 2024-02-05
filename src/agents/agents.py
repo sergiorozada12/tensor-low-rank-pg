@@ -55,7 +55,7 @@ class GaussianAgent(nn.Module):
 
 
 class SoftmaxAgent(nn.Module):
-    def __init__(self, actor, critic, discretizer_actor=None, discretizer_critic=None) -> None:
+    def __init__(self, actor, critic, n_a, discretizer_actor=None, discretizer_critic=None, beta=1.0, max_p=0.99) -> None:
         super(SoftmaxAgent, self).__init__()
 
         self.actor = actor
@@ -63,6 +63,10 @@ class SoftmaxAgent(nn.Module):
 
         self.discretizer_actor = discretizer_actor
         self.discretizer_critic = discretizer_critic
+
+        self.beta = beta
+        self.max_logit = 1
+        self.min_logit = np.log(((np.exp(self.max_logit) / max_p) - np.exp(self.max_logit)) / (n_a - 1))
 
     def pi(self, state: np.ndarray) -> torch.distributions.Normal:
         state = torch.as_tensor(state).double()
@@ -76,6 +80,7 @@ class SoftmaxAgent(nn.Module):
             logits = self.actor(state).squeeze()
 
         # Distribution
+        logits = torch.clamp(self.beta * logits, self.min_logit, self.max_logit)
         pi = torch.distributions.categorical.Categorical(logits=logits)
         return pi
 

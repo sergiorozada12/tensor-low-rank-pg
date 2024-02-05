@@ -140,6 +140,7 @@ class PPOSoftmaxNN:
         self,
         actor,
         critic,
+        n_a,
         discretizer_actor=None,
         discretizer_critic=None,
         lr_actor: float=1e-3,
@@ -147,6 +148,8 @@ class PPOSoftmaxNN:
         tau: float=0.97,
         epochs: int=1000,
         eps_clip: float=0.2,
+        beta=1.0,
+        max_p=0.99,
     ) -> None:
 
         self.gamma = gamma
@@ -159,8 +162,8 @@ class PPOSoftmaxNN:
         actor_old = deepcopy(actor)
         critic_old = deepcopy(critic)
 
-        self.policy = SoftmaxAgent(actor, critic, discretizer_actor, discretizer_critic)
-        self.policy_old = SoftmaxAgent(actor_old, critic_old, discretizer_actor, discretizer_critic)
+        self.policy = SoftmaxAgent(actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p)
+        self.policy_old = SoftmaxAgent(actor_old, critic_old, n_a, discretizer_actor, discretizer_critic, beta, max_p)
         self.policy_old.load_state_dict(self.policy.state_dict())
 
         self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
@@ -231,7 +234,8 @@ class PPOSoftmaxNN:
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
-            loss.backward()
+            if loss.abs() <= 1e10:
+                loss.backward()
             self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)

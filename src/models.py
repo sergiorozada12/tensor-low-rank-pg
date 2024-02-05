@@ -98,7 +98,7 @@ class PolicyPARAFAC(torch.nn.Module):
 
         factors = []
         for dim in dims:
-            factor = scale*torch.randn(dim, k, dtype=torch.double, requires_grad=True)
+            factor = scale*(torch.randn(dim, k, dtype=torch.double, requires_grad=True) - 1.0)
             factors.append(torch.nn.Parameter(factor))
         self.factors = torch.nn.ParameterList(factors)
 
@@ -131,7 +131,7 @@ class ValuePARAFAC(torch.nn.Module):
 
         factors = []
         for dim in dims:
-            factor = scale*torch.randn(dim, k, dtype=torch.double, requires_grad=True)
+            factor = scale*(torch.randn(dim, k, dtype=torch.double, requires_grad=True) - 1.0)
             factors.append(torch.nn.Parameter(factor))
         self.factors = torch.nn.ParameterList(factors)
 
@@ -145,3 +145,55 @@ class ValuePARAFAC(torch.nn.Module):
         if indices.shape[1] < len(self.factors):
             return torch.matmul(prod, self.factors[-1].T)
         return torch.sum(prod, dim=-1)
+
+
+class PolicyTensor(torch.nn.Module):
+    def __init__(self, dims, model='gaussian'):
+        super().__init__()
+
+        X = torch.randn(dims, dtype=torch.double, requires_grad=True)
+        self.X = torch.nn.Parameter(X)
+        self.model = model
+        if model == 'gaussian':
+            self.log_sigma = torch.nn.Parameter(torch.zeros(1))
+
+    def forward(self, indices):
+        res = self.X[indices]
+        if self.model == 'gaussian':
+            return res, torch.clamp(self.log_sigma, min=-2.5, max=0.0)
+        return res
+
+
+class ValueTensor(torch.nn.Module):
+    def __init__(self, dims):
+        super().__init__()
+
+        X = torch.randn(dims, dtype=torch.double, requires_grad=True)
+        self.X = torch.nn.Parameter(X)
+
+    def forward(self, indices):
+        return self.X[indices]
+
+
+class PolicyLM(torch.nn.Module):
+    def __init__(self, num_inputs, num_outputs, model='gaussian'):
+        super(PolicyNetwork, self).__init__()
+        self.lm = torch.nn.Linear(num_inputs, num_outputs)
+        self.model = model
+        if model == 'gaussian':
+            self.log_sigma = torch.nn.Parameter(torch.zeros(1, num_outputs))
+
+    def forward(self, x):
+        x = self.lm(x)
+        if self.model == 'gaussian':
+            return x, torch.clamp(self.log_sigma, min=-2.0, max=0.0)
+        return x
+
+
+class ValueLM(torch.nn.Module):
+    def __init__(self, num_inputs, num_outputs):
+        super(ValueNetwork, self).__init__()
+        self.lm = torch.nn.Linear(num_inputs, num_outputs)
+
+    def forward(self, x):
+        return self.lm(x)

@@ -119,19 +119,22 @@ class ReinforceSoftmaxNN:
             self,
             actor,
             critic,
+            n_a,
             discretizer_actor=None,
             discretizer_critic=None,
             gamma=0.99,
             tau=0.97,
             epochs: int=1000,
             lr_actor=1e-2,
+            beta=1.0,
+            max_p=0.99,
         ):
         self.gamma = gamma
         self.tau = tau
         self.epochs = epochs
 
         self.buffer = Buffer()
-        self.policy = SoftmaxAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.policy = SoftmaxAgent(actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p)
         self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
 
         self.opt_critic = torch.optim.LBFGS(
@@ -200,7 +203,8 @@ class ReinforceSoftmaxNN:
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
-            loss.backward()
+            if loss.abs() <= 1e10:
+                loss.backward()
             self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)

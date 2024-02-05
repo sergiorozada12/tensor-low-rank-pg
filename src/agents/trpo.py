@@ -258,6 +258,7 @@ class TRPOSoftmaxNN:
         self,
         actor,
         critic,
+        n_a,
         discretizer_actor=None,
         discretizer_critic=None,
         gamma: float=0.99,
@@ -266,6 +267,8 @@ class TRPOSoftmaxNN:
         cg_dampening: float=0.001,
         cg_tolerance: float=1e-10,
         cg_iteration: float=10,
+        beta: float=1.0,
+        max_p: float=0.99,
     ) -> None:
 
         self.gamma = gamma
@@ -280,8 +283,8 @@ class TRPOSoftmaxNN:
         actor_old = deepcopy(actor)
         critic_old = deepcopy(critic)
 
-        self.policy = SoftmaxAgent(actor, critic, discretizer_actor, discretizer_critic)
-        self.policy_old = SoftmaxAgent(actor_old, critic_old, discretizer_actor, discretizer_critic)
+        self.policy = SoftmaxAgent(actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p)
+        self.policy_old = SoftmaxAgent(actor_old, critic_old, n_a, discretizer_actor, discretizer_critic, beta, max_p)
 
         self.opt_critic = torch.optim.LBFGS(
             self.policy.critic.parameters(),
@@ -430,7 +433,8 @@ class TRPOSoftmaxNN:
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
-            loss.backward()
+            if loss.abs() <= 1e10:
+                loss.backward()
             self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
