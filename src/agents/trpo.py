@@ -117,6 +117,8 @@ class TRPOGaussianNN:
             advantages
     ):
         logprobs = self.policy.evaluate_logprob(states, actions)
+        if logprobs.dim() > 1:
+            logprobs = logprobs.sum(dim=1)
         ratio = torch.exp(logprobs - old_logprobs)
         return torch.mean(ratio * advantages)
 
@@ -222,6 +224,8 @@ class TRPOGaussianNN:
         states = torch.stack(self.buffer.states, dim=0).detach()
         actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
         old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
+        if old_logprobs.dim() > 1:
+            old_logprobs = old_logprobs.sum(dim=1)
 
         # Actor - Gradient estimation
         self.loss_actor(states, actions, old_logprobs, advantages).backward()

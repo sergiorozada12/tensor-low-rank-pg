@@ -115,10 +115,14 @@ class PPOGaussianNN:
         old_states = torch.stack(self.buffer.states, dim=0).detach()
         old_actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
         old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
+        if old_logprobs.dim() > 1:
+                old_logprobs = old_logprobs.sum(dim=1)
 
         # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(old_states, old_actions)
+            if logprobs.dim() > 1:
+                logprobs = logprobs.sum(dim=1)
             ratio = torch.exp(logprobs - old_logprobs)
             ratio_clamped = torch.clamp(ratio, 1 - self.eps_clip, 1 + self.eps_clip)
 

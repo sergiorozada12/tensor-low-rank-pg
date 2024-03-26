@@ -107,6 +107,8 @@ class ReinforceGaussianNN:
         # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(states, actions)
+            if logprobs.dim() > 1:
+                logprobs = logprobs.sum(dim=1)
             loss_actor = -logprobs*advantages
             self.opt_actor.zero_grad()
             loss_actor.mean().backward()

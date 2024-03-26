@@ -90,7 +90,7 @@ class ValueLR(torch.nn.Module):
 
 
 class PolicyPARAFAC(torch.nn.Module):
-    def __init__(self, dims, k, scale=1.0, model='gaussian'):
+    def __init__(self, dims, k, scale=1.0, bias=0.0, model='gaussian'):
         super().__init__()
 
         self.k = k
@@ -98,13 +98,13 @@ class PolicyPARAFAC(torch.nn.Module):
 
         factors = []
         for dim in dims:
-            factor = scale*(torch.randn(dim, k, dtype=torch.double, requires_grad=True) - 1.0)
+            factor = scale * (torch.randn(dim, k, dtype=torch.double, requires_grad=True) + bias)
             factors.append(torch.nn.Parameter(factor))
         self.factors = torch.nn.ParameterList(factors)
 
         self.model = model
         if model == 'gaussian':
-            self.log_sigma = torch.nn.Parameter(torch.zeros(1))
+            self.log_sigma = torch.nn.Parameter(torch.zeros(1, dims[-1]))
 
     def forward(self, indices):
         bsz = indices.shape[0]
@@ -123,7 +123,7 @@ class PolicyPARAFAC(torch.nn.Module):
 
 
 class ValuePARAFAC(torch.nn.Module):
-    def __init__(self, dims, k, scale=1.0):
+    def __init__(self, dims, k, scale=1.0, bias=0.0):
         super().__init__()
 
         self.k = k
@@ -131,7 +131,7 @@ class ValuePARAFAC(torch.nn.Module):
 
         factors = []
         for dim in dims:
-            factor = scale*(torch.randn(dim, k, dtype=torch.double, requires_grad=True) - 1.0)
+            factor = scale * (torch.randn(dim, k, dtype=torch.double, requires_grad=True) + bias)
             factors.append(torch.nn.Parameter(factor))
         self.factors = torch.nn.ParameterList(factors)
 
@@ -158,7 +158,7 @@ class PolicyTensor(torch.nn.Module):
             self.log_sigma = torch.nn.Parameter(torch.zeros(1))
 
     def forward(self, indices):
-        res = self.X[indices]
+        res = self.X[[indices[:, i] for i in range(indices.shape[1])]]
         if self.model == 'gaussian':
             return res, torch.clamp(self.log_sigma, min=-2.5, max=0.0)
         return res
@@ -172,7 +172,7 @@ class ValueTensor(torch.nn.Module):
         self.X = torch.nn.Parameter(X)
 
     def forward(self, indices):
-        return self.X[indices]
+        return self.X[[indices[:, i] for i in range(indices.shape[1])]]
 
 
 class PolicyLM(torch.nn.Module):
