@@ -93,8 +93,9 @@ class ReinforceGaussianNN:
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
-            loss.backward()
-            self.zero_grad(self.policy.critic, idx)
+            if loss.abs() <= 1e10:
+                loss.backward()
+                self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 
@@ -107,8 +108,6 @@ class ReinforceGaussianNN:
         # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(states, actions)
-            if logprobs.dim() > 1:
-                logprobs = logprobs.sum(dim=1)
             loss_actor = -logprobs*advantages
             self.opt_actor.zero_grad()
             loss_actor.mean().backward()
@@ -207,7 +206,7 @@ class ReinforceSoftmaxNN:
             loss = (values - rewards).pow(2).mean()
             if loss.abs() <= 1e10:
                 loss.backward()
-            self.zero_grad(self.policy.critic, idx)
+                self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 

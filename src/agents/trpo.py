@@ -207,8 +207,9 @@ class TRPOGaussianNN:
             self.opt_critic.zero_grad()
             values = self.policy.evaluate_value(states)
             loss = (values - rewards).pow(2).mean()
-            loss.backward()
-            self.zero_grad(self.policy.critic, idx)
+            if loss.abs() <= 1e10:
+                loss.backward()
+                self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 
@@ -439,7 +440,7 @@ class TRPOSoftmaxNN:
             loss = (values - rewards).pow(2).mean()
             if loss.abs() <= 1e10:
                 loss.backward()
-            self.zero_grad(self.policy.critic, idx)
+                self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 

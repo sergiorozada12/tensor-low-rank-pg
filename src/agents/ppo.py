@@ -240,7 +240,7 @@ class PPOSoftmaxNN:
             loss = (values - rewards).pow(2).mean()
             if loss.abs() <= 1e10:
                 loss.backward()
-            self.zero_grad(self.policy.critic, idx)
+                self.zero_grad(self.policy.critic, idx)
             return loss
         self.opt_critic.step(closure)
 

@@ -111,7 +111,8 @@ class WirelessCommunicationsEnv:
         self.queue[self.t] = self.queue[self.t - 1] - packets
         
         if self.t % self.t_queue_arrival == 0:
-            self.queue[self.t] += self.queue_arrival
+            noise = np.random.randint(5) - 2
+            self.queue[self.t] += self.queue_arrival + noise
             
         self.queue[self.t] = np.clip(self.queue[self.t], 0, self.queue_max_capacity)
 
