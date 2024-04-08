@@ -147,53 +147,42 @@ class ValuePARAFAC(torch.nn.Module):
         return torch.sum(prod, dim=-1)
 
 
-class PolicyTensor(torch.nn.Module):
-    def __init__(self, dims, model='gaussian'):
-        super().__init__()
-
-        X = torch.randn(dims, dtype=torch.double, requires_grad=True)
-        self.X = torch.nn.Parameter(X)
-        self.model = model
-        if model == 'gaussian':
-            self.log_sigma = torch.nn.Parameter(torch.zeros(1))
-
-    def forward(self, indices):
-        res = self.X[[indices[:, i] for i in range(indices.shape[1])]]
-        if self.model == 'gaussian':
-            return res, torch.clamp(self.log_sigma, min=-2.5, max=0.0)
-        return res
-
-
-class ValueTensor(torch.nn.Module):
-    def __init__(self, dims):
-        super().__init__()
-
-        X = torch.randn(dims, dtype=torch.double, requires_grad=True)
-        self.X = torch.nn.Parameter(X)
-
-    def forward(self, indices):
-        return self.X[[indices[:, i] for i in range(indices.shape[1])]]
-
-
-class PolicyLM(torch.nn.Module):
-    def __init__(self, num_inputs, num_outputs, model='gaussian'):
-        super(PolicyNetwork, self).__init__()
-        self.lm = torch.nn.Linear(num_inputs, num_outputs)
+class PolicyRBF(torch.nn.Module):
+    def __init__(self, num_inputs, num_rbf_features, num_outputs, model='gaussian'):
+        super(PolicyRBF, self).__init__()
+        self.num_rbf_features = num_rbf_features
+        self.centers = torch.randn(num_rbf_features, num_inputs).double()
+        self.linear = torch.nn.Linear(num_rbf_features, num_outputs)
+        
         self.model = model
         if model == 'gaussian':
             self.log_sigma = torch.nn.Parameter(torch.zeros(1, num_outputs))
 
+    def radial_basis(self, x):
+        if x.ndim == 1:
+            x = torch.unsqueeze(x, dim=0)
+        dist = torch.cdist(x, self.centers)
+        return torch.exp(-dist.pow(2))
+
     def forward(self, x):
-        x = self.lm(x)
+        rbf_feats = self.radial_basis(x)
+        x = self.linear(rbf_feats).squeeze()
         if self.model == 'gaussian':
             return x, torch.clamp(self.log_sigma, min=-2.0, max=0.0)
         return x
 
 
-class ValueLM(torch.nn.Module):
-    def __init__(self, num_inputs, num_outputs):
-        super(ValueNetwork, self).__init__()
-        self.lm = torch.nn.Linear(num_inputs, num_outputs)
+class ValueRBF(torch.nn.Module):
+    def __init__(self, num_inputs, num_rbf_features, num_outputs):
+        super(ValueRBF, self).__init__()
+        self.num_rbf_features = num_rbf_features
+        self.centers = torch.randn(num_rbf_features, num_inputs).double()
+        self.linear = torch.nn.Linear(num_rbf_features, num_outputs)
+
+    def radial_basis(self, x):
+        dist = torch.cdist(x, self.centers)
+        return torch.exp(-dist.pow(2))
 
     def forward(self, x):
-        return self.lm(x)
+        rbf_feats = self.radial_basis(x)
+        return self.linear(rbf_feats)
