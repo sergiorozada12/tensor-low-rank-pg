@@ -8,7 +8,9 @@ from src.models import (
     PolicyLR,
     ValueLR,
     PolicyPARAFAC,
-    ValuePARAFAC
+    ValuePARAFAC,
+    PolicyRBF,
+    ValueRBF
 )
 from src.utils import Discretizer
 from src.agents.reinforce import ReinforceGaussianNN, ReinforceSoftmaxNN
@@ -188,32 +190,97 @@ def run_experiment_trpo_ten(experiment_index):
         print('hey', flush=True)
         return [0]*500
 
+
+def run_experiment_reinforce_rbf(experiment_index):
+    env = gym.make("MountainCarContinuous-v0")
+    actor = PolicyRBF(2, 20, 1, model='gaussian').double()
+    critic = ValueRBF(2, 20, 1).double()
+
+    agent = ReinforceGaussianNN(
+        actor,
+        critic,
+        gamma=0.99,
+        tau=0.9,
+        lr_actor=1e-3,
+        epochs=10,
+    )
+
+    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+    return G
+
+def run_experiment_ppo_rbf(experiment_index):
+    env = gym.make("MountainCarContinuous-v0")
+    actor = PolicyRBF(2, 20, 1, model='gaussian').double()
+    critic = ValueRBF(2, 20, 1).double()
+
+    agent = PPOGaussianNN(
+        actor,
+        critic,
+        lr_actor=1e-3,
+        gamma=0.99,
+        tau=0.9,
+        epochs=10,
+        eps_clip=0.2 
+    )
+
+    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+    return G
+
+def run_experiment_trpo_rbf(experiment_index):
+    env = gym.make("MountainCarContinuous-v0")
+    actor = PolicyRBF(2, 20, 1, model='gaussian').double()
+    critic = ValueRBF(2, 20, 1).double()
+
+    agent = TRPOGaussianNN(
+        actor,
+        critic,
+        gamma=0.99,
+        delta=0.01,
+        tau=0.9,
+        cg_dampening=0.1,
+        cg_tolerance=1e-10,
+        cg_iteration=10,
+    )
+
+    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    _, G, _ = trainer.train(
+        env,
+        agent,
+        epochs=5_00,
+        max_steps=10_000,
+        update_freq=10_000,
+        initial_offset=10,
+    )
+    return G
+
 if __name__ == "__main__":
     num_experiments = 100
 
     with multiprocessing.Pool(processes=num_experiments) as pool:
         results = pool.map(
-            run_experiment_reinforce_ten,
+            run_experiment_reinforce_rbf,
             range(num_experiments)
         )
 
     results = np.array(results)
-    np.save('mountaincar_continuous_reinforce_ten.npy', results)
+    np.save('mountaincar_continuous_reinforce_rbf.npy', results)
 
     with multiprocessing.Pool(processes=num_experiments) as pool:
         results = pool.map(
-            run_experiment_ppo_ten,
+            run_experiment_ppo_rbf,
             range(num_experiments)
         )
 
     results = np.array(results)
-    np.save('mountaincar_continuous_ppo_ten.npy', results)
+    np.save('mountaincar_continuous_ppo_rbf.npy', results)
 
     with multiprocessing.Pool(processes=num_experiments) as pool:
         results = pool.map(
-            run_experiment_trpo_ten,
+            run_experiment_trpo_rbf,
             range(num_experiments)
         )
 
     results = np.array(results)
-    np.save('mountaincar_continuous_trpo_ten.npy', results)
+    np.save('mountaincar_continuous_trpo_rbf.npy', results)
