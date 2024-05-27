@@ -297,4 +297,4 @@ def plot_control():
         ax.legend()
 
         plt.tight_layout()
-        fig.savefig('fig_1.jpg', dpi=300)
+        fig.savefig('figures/fig_1.jpg', dpi=300)

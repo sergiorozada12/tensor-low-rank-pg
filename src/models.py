@@ -45,50 +45,6 @@ class ValueNetwork(torch.nn.Module):
         return x
 
 
-class PolicyLR(torch.nn.Module):
-    def __init__(self, n, m, k, scale=1.0, model='gaussian'):
-        super().__init__()
-
-        L = scale*torch.randn(n, k, dtype=torch.float32, requires_grad=True)
-        R = scale*torch.randn(k, m, dtype=torch.float32, requires_grad=True)
-
-        self.L = torch.nn.Parameter(L)
-        self.R = torch.nn.Parameter(R)
-
-        self.model = model
-        if model == 'gaussian':
-            self.log_sigma = torch.nn.Parameter(torch.zeros(1))
-
-    def forward(self, indices):
-        rows, cols = indices
-        if cols is not None:
-            prod = self.L[rows, :] * self.R[:, cols].T
-            res = torch.sum(prod, dim=-1)
-        else:
-            res = torch.matmul(self.L[rows, :], self.R.T)
-        if self.model == 'gaussian':
-            return res, torch.clamp(self.log_sigma, min=-2.5, max=0.0)
-        return res
-
-
-class ValueLR(torch.nn.Module):
-    def __init__(self, n, m, k, scale=1.0):
-        super().__init__()
-
-        L = scale*torch.randn(n, k, dtype=torch.float32, requires_grad=True)
-        R = scale*torch.randn(k, m, dtype=torch.float32, requires_grad=True)
-
-        self.L = torch.nn.Parameter(L)
-        self.R = torch.nn.Parameter(R)
-
-    def forward(self, indices):
-        rows, cols = indices
-        if cols is not None:
-            prod = self.L[rows, :] * self.R[:, cols].T
-            return torch.sum(prod, dim=-1)
-        return torch.matmul(self.L[rows, :], self.R.T)
-
-
 class PolicyPARAFAC(torch.nn.Module):
     def __init__(self, dims, k, scale=1.0, bias=0.0, model='gaussian'):
         super().__init__()

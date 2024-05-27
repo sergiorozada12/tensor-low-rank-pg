@@ -143,4 +143,4 @@ class WirelessCommunicationsEnv:
     def _get_obs(self, t):
         return np.concatenate(
             [self.g[:, t], self.occ[:, t], [self.queue[t], self.batt[t]]]
-        )
+    )
