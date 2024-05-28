@@ -23,6 +23,10 @@ torch.set_num_threads(1)
 
 
 def run_experiment_reinforce_nn(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
         actor = PolicyNetwork(2, [8], 3, model='softmax').double()
@@ -48,6 +52,10 @@ def run_experiment_reinforce_nn(experiment_index):
 
 
 def run_experiment_ppo_nn(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
         actor = PolicyNetwork(2, [8], 3, model='softmax').double()
@@ -74,6 +82,10 @@ def run_experiment_ppo_nn(experiment_index):
 
 
 def run_experiment_trpo_nn(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
 
@@ -109,6 +121,10 @@ def run_experiment_trpo_nn(experiment_index):
 
 
 def run_experiment_reinforce_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
 
@@ -143,6 +159,10 @@ def run_experiment_reinforce_ten(experiment_index):
 
 
 def run_experiment_ppo_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
 
@@ -178,6 +198,10 @@ def run_experiment_ppo_ten(experiment_index):
 
 
 def run_experiment_trpo_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
 
@@ -222,6 +246,10 @@ def run_experiment_trpo_ten(experiment_index):
 
 
 def run_experiment_reinforce_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
         actor = PolicyRBF(2, 50, 3, model='softmax').double()
@@ -247,6 +275,10 @@ def run_experiment_reinforce_rbf(experiment_index):
 
 
 def run_experiment_ppo_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
         actor = PolicyRBF(2, 50, 3, model='softmax').double()
@@ -273,6 +305,10 @@ def run_experiment_ppo_rbf(experiment_index):
 
 
 def run_experiment_trpo_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCar-v0")
 

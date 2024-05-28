@@ -23,6 +23,10 @@ torch.set_num_threads(1)
 
 
 def run_experiment_reinforce_nn(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
     actor = PolicyNetwork(3, [64], 1).double()
     critic = ValueNetwork(3, [64], 1).double()
@@ -43,6 +47,10 @@ def run_experiment_reinforce_nn(experiment_index):
 
 
 def run_experiment_ppo_nn(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
     actor = PolicyNetwork(3, [64], 1).double()
     critic = ValueNetwork(3, [64], 1).double()
@@ -63,6 +71,10 @@ def run_experiment_ppo_nn(experiment_index):
 
 
 def run_experiment_trpo_nn(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
     actor = PolicyNetwork(3, [64], 1).double()
     critic = ValueNetwork(3, [64], 1).double()
@@ -91,6 +103,10 @@ def run_experiment_trpo_nn(experiment_index):
 
 
 def run_experiment_reinforce_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
 
     discretizer = Discretizer(
@@ -120,6 +136,10 @@ def run_experiment_reinforce_ten(experiment_index):
 
 
 def run_experiment_ppo_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
 
     discretizer = Discretizer(
@@ -150,6 +170,10 @@ def run_experiment_ppo_ten(experiment_index):
 
 
 def run_experiment_trpo_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
 
     discretizer = Discretizer(
@@ -188,6 +212,10 @@ def run_experiment_trpo_ten(experiment_index):
 
 
 def run_experiment_reinforce_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
     actor = PolicyRBF(3, 300, 1, model='gaussian').double()
     critic = ValueRBF(3, 300, 1).double()
@@ -208,6 +236,10 @@ def run_experiment_reinforce_rbf(experiment_index):
 
 
 def run_experiment_ppo_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
     actor = PolicyRBF(3, 300, 1, model='gaussian').double()
     critic = ValueRBF(3, 300, 1).double()
@@ -228,6 +260,10 @@ def run_experiment_ppo_rbf(experiment_index):
 
 
 def run_experiment_trpo_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make('Pendulum-v1', g=9.81)
     actor = PolicyRBF(3, 300, 1, model='gaussian').double()
     critic = ValueRBF(3, 300, 1).double()

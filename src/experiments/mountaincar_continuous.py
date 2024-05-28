@@ -46,6 +46,10 @@ def run_experiment_reinforce_nn(experiment_index):
 
 
 def run_experiment_ppo_nn(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make("MountainCarContinuous-v0")
     actor = PolicyNetwork(2, [8], 1).double()
     critic = ValueNetwork(2, [8], 1).double()
@@ -66,6 +70,10 @@ def run_experiment_ppo_nn(experiment_index):
 
 
 def run_experiment_trpo_nn(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make("MountainCarContinuous-v0")
     actor = PolicyNetwork(2, [8], 1).double()
     critic = ValueNetwork(2, [8], 1).double()
@@ -94,6 +102,10 @@ def run_experiment_trpo_nn(experiment_index):
 
 
 def run_experiment_reinforce_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCarContinuous-v0")
 
@@ -127,6 +139,10 @@ def run_experiment_reinforce_ten(experiment_index):
 
 
 def run_experiment_ppo_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCarContinuous-v0")
 
@@ -159,6 +175,10 @@ def run_experiment_ppo_ten(experiment_index):
 
 
 def run_experiment_trpo_ten(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     try:
         env = gym.make("MountainCarContinuous-v0")
 
@@ -199,6 +219,10 @@ def run_experiment_trpo_ten(experiment_index):
 
 
 def run_experiment_reinforce_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make("MountainCarContinuous-v0")
     actor = PolicyRBF(2, 20, 1, model='gaussian').double()
     critic = ValueRBF(2, 20, 1).double()
@@ -217,6 +241,10 @@ def run_experiment_reinforce_rbf(experiment_index):
     return G
 
 def run_experiment_ppo_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make("MountainCarContinuous-v0")
     actor = PolicyRBF(2, 20, 1, model='gaussian').double()
     critic = ValueRBF(2, 20, 1).double()
@@ -236,6 +264,10 @@ def run_experiment_ppo_rbf(experiment_index):
     return G
 
 def run_experiment_trpo_rbf(experiment_index):
+    random.seed(experiment_index)
+    np.random.seed(experiment_index)
+    torch.manual_seed(experiment_index)
+
     env = gym.make("MountainCarContinuous-v0")
     actor = PolicyRBF(2, 20, 1, model='gaussian').double()
     critic = ValueRBF(2, 20, 1).double()
