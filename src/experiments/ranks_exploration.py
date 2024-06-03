@@ -56,7 +56,7 @@ def train_discrete():
     return agent
 
 
-def get_tensor(agent):
+def get_tensor_continuous(agent):
     d1 = np.linspace(-1, 1, 100)
     d2 = np.linspace(-1, 1, 100)
     d3 = np.linspace(-5, 5, 100)
@@ -70,6 +70,19 @@ def get_tensor(agent):
     X_debiased = X - X.mean()
     return X_debiased
 
+def get_tensor_discrete(agent):
+    d1 = np.linspace(-1, 1, 100)
+    d2 = np.linspace(-1, 1, 100)
+    d3 = np.linspace(-5, 5, 100)
+
+    X = np.zeros([d1.size, d2.size, d3.size, 3])
+    for i1, s1 in enumerate(d1):
+        for i2, s2 in enumerate(d2):
+            for i3, s3 in enumerate(d3):
+                logits = agent.policy.actor(torch.tensor([s1, s2, s3]))
+                X[i1, i2, i3, :] = logits.detach().numpy()
+    X_debiased = X - X.mean()
+    return X_debiased
 
 def tensor_decomposition(X, maxrank, step, filename):
     ranks, errors = [], []
@@ -90,8 +103,8 @@ def run_ranks_exploration():
     agent_cont = train_continuous()
     agent_disc = train_discrete()
 
-    X_cont = get_tensor(agent_cont)
-    X_disc = get_tensor(agent_disc)
+    X_cont = get_tensor_continuous(agent_cont)
+    X_disc = get_tensor_discrete(agent_disc)
 
     tensor_decomposition(X_cont, 11, 1, 'cont')
     tensor_decomposition(X_disc, 35, 3, 'disc')

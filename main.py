@@ -16,12 +16,13 @@ N_PROC = 50
 
 if __name__ == "__main__":
     run_ranks_exploration()
+    plot_ranks()
+
     run_pendulum_cont_experiments(N_EXP, N_PROC)
     run_pendulum_disc_experiments(N_EXP, N_PROC)
     run_mountaincar_cont_experiments(N_EXP, N_PROC)
     run_mountaincar_disc_experiments(N_EXP, N_PROC)
-    run_wireless_experiments(N_EXP, N_PROC)
-
-    plot_ranks()
     plot_control()
+
+    run_wireless_experiments(N_EXP, N_PROC)
     plot_wireless()
