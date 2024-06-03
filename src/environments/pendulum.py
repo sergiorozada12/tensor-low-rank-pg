@@ -1,5 +1,5 @@
 import numpy as np
-from gym.envs.classic_control.pendulum import PendulumEnv, angle_normalize
+from gymnasium.envs.classic_control.pendulum import PendulumEnv, angle_normalize
 
 
 class PendulumEnvDiscrete(PendulumEnv):
