@@ -179,7 +179,7 @@ def run_tlr(n):
         buckets=[10, 10, 2, 2, 10, 10],
     )
 
-    actor = PolicyPARAFAC([10, 10, 2, 2, 10, 10, 2], k=10, model='gaussian', scale=0.5, bias=1.0).double()
+    actor = PolicyPARAFAC([10, 10, 2, 2, 10, 10, 2], k=10, num_outputs=2, model='gaussian', scale=0.5, bias=1.0).double()
     critic = ValuePARAFAC([10, 10, 2, 2, 10, 10], k=10, scale=1.0).double()
 
     agent = PPOGaussianNN(

@@ -115,7 +115,7 @@ def run_experiment_reinforce_ten(experiment_index):
             buckets=[10, 10],
         )
 
-        actor = PolicyPARAFAC([10, 10], 1, 0.1).double()
+        actor = PolicyPARAFAC([10, 10], 1, 1, 0.1).double()
         critic = ValuePARAFAC([10, 10], 1, 0.1).double()
 
         agent = ReinforceGaussianNN(
@@ -152,7 +152,7 @@ def run_experiment_ppo_ten(experiment_index):
             buckets=[10, 10],
         )
 
-        actor = PolicyPARAFAC([10, 10], 1, 0.1).double()
+        actor = PolicyPARAFAC([10, 10], 1, 1, 0.1).double()
         critic = ValuePARAFAC([10, 10], 1, 0.1).double()
 
         agent = PPOGaussianNN(
@@ -188,7 +188,7 @@ def run_experiment_trpo_ten(experiment_index):
             buckets=[10, 10],
         )
 
-        actor = PolicyPARAFAC([10, 10], 1, 0.1).double()
+        actor = PolicyPARAFAC([10, 10], 1, 1, 0.1).double()
         critic = ValuePARAFAC([10, 10], 1, 1.0).double()
 
         agent = TRPOGaussianNN(
