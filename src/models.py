@@ -46,7 +46,7 @@ class ValueNetwork(torch.nn.Module):
 
 
 class PolicyPARAFAC(torch.nn.Module):
-    def __init__(self, dims, k, scale=1.0, bias=0.0, model='gaussian'):
+    def __init__(self, dims, k, num_outputs, scale=1.0, bias=0.0, model='gaussian'):
         super().__init__()
 
         self.k = k
@@ -60,7 +60,7 @@ class PolicyPARAFAC(torch.nn.Module):
 
         self.model = model
         if model == 'gaussian':
-            self.log_sigma = torch.nn.Parameter(torch.zeros(1, dims[-1]))
+            self.log_sigma = torch.nn.Parameter(torch.zeros(1, num_outputs))
 
     def forward(self, indices):
         bsz = indices.shape[0]
