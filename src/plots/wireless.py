@@ -6,10 +6,10 @@ from src.utils import OOMFormatter
 
 
 def plot_wireless():
-    wireless_ten = np.load("results/wireless_tlr.npy")
+    wireless_ten = np.load("results/wireless_ten.npy")
     wireless_rbf = np.load("results/wireless_rbf.npy")
     wireless_nn = np.load("results/wireless_nn_small.npy")
-    wireless_nn_la = np.load("results/wireless_nn_large.npy")
+    wireless_nn_la = np.load("results/wireless_nn_big.npy")
 
     with plt.style.context(['science'], ['ieee']):
         matplotlib.rcParams.update({'font.size': 16})

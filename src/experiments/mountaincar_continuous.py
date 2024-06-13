@@ -75,7 +75,7 @@ def run_experiment_trpo_nn(experiment_index):
     torch.manual_seed(experiment_index)
 
     env = gym.make("MountainCarContinuous-v0")
-    actor = PolicyNetwork(2, [8], 1).double()
+    actor = PolicyNetwork(2, [8], 1, max_sigma=1.0).double()
     critic = ValueNetwork(2, [8], 1).double()
 
     agent = TRPOGaussianNN(
@@ -84,7 +84,7 @@ def run_experiment_trpo_nn(experiment_index):
         gamma=0.99,
         delta=0.01,
         tau=0.9,
-        cg_dampening=0.1,
+        cg_dampening=0.01,
         cg_tolerance=1e-10,
         cg_iteration=10,
     )
@@ -93,7 +93,7 @@ def run_experiment_trpo_nn(experiment_index):
     _, G, _ = trainer.train(
         env,
         agent,
-        epochs=5_00,
+        epochs=500,
         max_steps=10_000,
         update_freq=10_000,
         initial_offset=10,
@@ -106,36 +106,32 @@ def run_experiment_reinforce_ten(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    try:
-        env = gym.make("MountainCarContinuous-v0")
+    env = gym.make("MountainCarContinuous-v0")
 
-        discretizer = Discretizer(
-            min_points=[-1.2, -0.07],
-            max_points=[0.6, 0.07],
-            buckets=[10, 10],
-        )
+    discretizer = Discretizer(
+        min_points=[-1.2, -0.07],
+        max_points=[0.6, 0.07],
+        buckets=[10, 10],
+    )
 
-        actor = PolicyPARAFAC([10, 10], 1, 1, 0.1).double()
-        critic = ValuePARAFAC([10, 10], 1, 0.1).double()
+    actor = PolicyPARAFAC([10, 10], 1, 1, 0.1).double()
+    critic = ValuePARAFAC([10, 10], 1, 0.1).double()
 
-        agent = ReinforceGaussianNN(
-            actor,
-            critic,
-            discretizer,
-            discretizer,
-            gamma=0.99,
-            tau=0.9,
-            lr_actor=1e-3,
-            epochs=10
-        )
+    agent = ReinforceGaussianNN(
+        actor,
+        critic,
+        discretizer,
+        discretizer,
+        gamma=0.99,
+        tau=0.9,
+        lr_actor=1e-3,
+        epochs=10
+    )
 
-        trainer = Trainer(actor_opt='bcd', critic_opt='bcd')
-        _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
-        print(np.array(G).shape, flush=True)
-        return G
-    except:
-        print('hey', flush=True)
-        return [0]*500
+    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+    print(np.array(G).shape, flush=True)
+    return G
 
 
 def run_experiment_ppo_ten(experiment_index):
@@ -143,31 +139,32 @@ def run_experiment_ppo_ten(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
+    env = gym.make("MountainCarContinuous-v0")
+
+    discretizer = Discretizer(
+        min_points=[-1.2, -0.07],
+        max_points=[0.6, 0.07],
+        buckets=[10, 10],
+    )
+
+    actor = PolicyPARAFAC([10, 10], 1, 1, 0.1).double()
+    critic = ValuePARAFAC([10, 10], 1, 0.1).double()
+
+    agent = PPOGaussianNN(
+        actor,
+        critic,
+        discretizer,
+        discretizer,
+        lr_actor=1e-3,
+        gamma=0.99,
+        tau=0.9,
+        epochs=10,
+        eps_clip=0.2 
+    )
+
+    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+
     try:
-        env = gym.make("MountainCarContinuous-v0")
-
-        discretizer = Discretizer(
-            min_points=[-1.2, -0.07],
-            max_points=[0.6, 0.07],
-            buckets=[10, 10],
-        )
-
-        actor = PolicyPARAFAC([10, 10], 1, 1, 0.1).double()
-        critic = ValuePARAFAC([10, 10], 1, 0.1).double()
-
-        agent = PPOGaussianNN(
-            actor,
-            critic,
-            discretizer,
-            discretizer,
-            lr_actor=1e-3,
-            gamma=0.99,
-            tau=0.9,
-            epochs=10,
-            eps_clip=0.2 
-        )
-
-        trainer = Trainer(actor_opt='bcd', critic_opt='bcd')
         _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
         return G
     except:
@@ -179,43 +176,40 @@ def run_experiment_trpo_ten(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    try:
-        env = gym.make("MountainCarContinuous-v0")
+    env = gym.make("MountainCarContinuous-v0")
 
-        discretizer = Discretizer(
-            min_points=[-1.2, -0.07],
-            max_points=[0.6, 0.07],
-            buckets=[10, 10],
-        )
+    discretizer = Discretizer(
+        min_points=[-1.2, -0.07],
+        max_points=[0.6, 0.07],
+        buckets=[10, 10],
+    )
 
-        actor = PolicyPARAFAC([10, 10], 1, 1, 0.1).double()
-        critic = ValuePARAFAC([10, 10], 1, 1.0).double()
+    actor = PolicyPARAFAC([10, 10], 1, 1, 0.1, max_sigma=1.0).double()
+    critic = ValuePARAFAC([10, 10], 1, 0.1).double()
 
-        agent = TRPOGaussianNN(
-            actor,
-            critic,
-            discretizer,
-            discretizer,
-            gamma=0.99,
-            delta=0.01,
-            tau=0.9,
-            cg_dampening=0.1,
-            cg_tolerance=1e-10,
-            cg_iteration=10,
-        )
+    agent = TRPOGaussianNN(
+        actor,
+        critic,
+        discretizer,
+        discretizer,
+        gamma=0.99,
+        delta=0.01,
+        tau=0.9,
+        cg_dampening=0.01,
+        cg_tolerance=1e-10,
+        cg_iteration=10,
+    )
 
-        trainer = Trainer(actor_opt='bcd', critic_opt='bcd')
-        _, G, _ = trainer.train(
-            env,
-            agent,
-            epochs=500,
-            max_steps=10_000,
-            update_freq=10_000,
-            initial_offset=10,
-        )
-        return G
-    except:
-        return [0]*500
+    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    _, G, _ = trainer.train(
+        env,
+        agent,
+        epochs=500,
+        max_steps=10_000,
+        update_freq=10_000,
+        initial_offset=10,
+    )
+    return G
 
 
 def run_experiment_reinforce_rbf(experiment_index):
@@ -269,7 +263,7 @@ def run_experiment_trpo_rbf(experiment_index):
     torch.manual_seed(experiment_index)
 
     env = gym.make("MountainCarContinuous-v0")
-    actor = PolicyRBF(2, 20, 1, model='gaussian').double()
+    actor = PolicyRBF(2, 20, 1, model='gaussian', max_sigma=1.0).double()
     critic = ValueRBF(2, 20, 1).double()
 
     agent = TRPOGaussianNN(
@@ -278,7 +272,7 @@ def run_experiment_trpo_rbf(experiment_index):
         gamma=0.99,
         delta=0.01,
         tau=0.9,
-        cg_dampening=0.1,
+        cg_dampening=0.01,
         cg_tolerance=1e-10,
         cg_iteration=10,
     )
@@ -287,7 +281,7 @@ def run_experiment_trpo_rbf(experiment_index):
     _, G, _ = trainer.train(
         env,
         agent,
-        epochs=5_00,
+        epochs=500,
         max_steps=10_000,
         update_freq=10_000,
         initial_offset=10,

@@ -53,118 +53,106 @@ def plot_control():
         # Pendulum Continuous
 
         ax = axs[0, 0]
-        
+
         med = np.median(pend_cont_rein_rbf, axis=0)
         p25 = np.percentile(pend_cont_rein_rbf, q=25, axis=0)
         p75 = np.percentile(pend_cont_rein_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 603 pars.', alpha=.8)
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 603 pars.', alpha=.8, color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(pend_cont_rein_nn, axis=0)
         p25 = np.percentile(pend_cont_rein_nn, q=25, axis=0)
         p75 = np.percentile(pend_cont_rein_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 642 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)    
+        ax.plot(med, label='NN - 642 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')    
 
         med = np.median(pend_cont_rein_ten, axis=0)
         p25 = np.percentile(pend_cont_rein_ten, q=25, axis=0)
         p75 = np.percentile(pend_cont_rein_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 300 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 300 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
+
         ax.yaxis.set_major_formatter(OOMFormatter(3, "%1.2f"))
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 2_000)
         ax.set_xticks([0, 1_000, 2_000])
         ax.set_ylabel("Return - PendulumCont")
         ax.grid()
-        
-        #ax.legend()
-        
-        ####
 
         ax = axs[0, 1]
-        
         med = np.median(pend_cont_ppo_rbf, axis=0)
         p25 = np.percentile(pend_cont_ppo_rbf, q=25, axis=0)
         p75 = np.percentile(pend_cont_ppo_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 603 pars.', alpha=.8)
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 603 pars.', alpha=.8, color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(pend_cont_ppo_nn, axis=0)
         p25 = np.percentile(pend_cont_ppo_nn, q=25, axis=0)
         p75 = np.percentile(pend_cont_ppo_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 642 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 642 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(pend_cont_ppo_ten, axis=0)
         p25 = np.percentile(pend_cont_ppo_ten, q=25, axis=0)
         p75 = np.percentile(pend_cont_ppo_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 300 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='TLR - 300 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
         
         ax.yaxis.set_major_formatter(OOMFormatter(3, "%1.2f"))
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 1_000)
         ax.set_xticks([0, 500, 1_000])
         ax.grid()
-        
-        #ax.legend()
-
-        ###
 
         ax = axs[0, 2]
-        
+
         med = np.median(pend_cont_trpo_rbf, axis=0)
         p25 = np.percentile(pend_cont_trpo_rbf, q=25, axis=0)
         p75 = np.percentile(pend_cont_trpo_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 603 pars.', alpha=.8)
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 603 pars.', alpha=.8, color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(pend_cont_trpo_nn, axis=0)
         p25 = np.percentile(pend_cont_trpo_nn, q=25, axis=0)
         p75 = np.percentile(pend_cont_trpo_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 642 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 642 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(pend_cont_trpo_ten, axis=0)
         p25 = np.percentile(pend_cont_trpo_ten, q=25, axis=0)
         p75 = np.percentile(pend_cont_trpo_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 300 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 300 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
+
         ax.yaxis.set_major_formatter(OOMFormatter(3, "%1.2f"))
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 500)
         ax.set_xticks([0, 250, 500])
         ax.grid()
-        
+
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
 
         # Mountaincar Continuous
         ax = axs[1, 0]
-        
+
         med = np.median(mount_cont_rein_rbf, axis=0)
         p25 = np.percentile(mount_cont_rein_rbf, q=25, axis=0)
         p75 = np.percentile(mount_cont_rein_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 43 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='RBF - 43 pars.', color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
+
         med = np.median(mount_cont_rein_nn, axis=0)
         p25 = np.percentile(mount_cont_rein_nn, q=25, axis=0)
         p75 = np.percentile(mount_cont_rein_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 62 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 62 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(mount_cont_rein_ten, axis=0)
         p25 = np.percentile(mount_cont_rein_ten, q=25, axis=0)
         p75 = np.percentile(mount_cont_rein_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 40 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 40 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
+
 
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 500)
@@ -172,74 +160,66 @@ def plot_control():
         ax.set_ylabel("Return - MountaincarCont")
         ax.set_xlabel("Episodes - AC")
         ax.grid()
-        
-        #ax.legend()
 
-        ###
         ax = axs[1, 1]
-        
+
         med = np.median(mount_cont_ppo_rbf, axis=0)
         p25 = np.percentile(mount_cont_ppo_rbf, q=25, axis=0)
         p75 = np.percentile(mount_cont_ppo_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 43 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 43 pars.', color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(mount_cont_ppo_nn, axis=0)
         p25 = np.percentile(mount_cont_ppo_nn, q=25, axis=0)
         p75 = np.percentile(mount_cont_ppo_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 62 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 62 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(mount_cont_ppo_ten, axis=0)
         p25 = np.percentile(mount_cont_ppo_ten, q=25, axis=0)
         p75 = np.percentile(mount_cont_ppo_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 40 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 40 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
+
 
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xticks([0, 250, 500])
         ax.set_xlim(0, 500)
         ax.set_xlabel("Episodes - PPO")
         ax.grid()
-        
-        #ax.legend()
 
-        ###
         ax = axs[1, 2]
-        
+
         med = np.median(mount_cont_trpo_rbf, axis=0)
         p25 = np.percentile(mount_cont_trpo_rbf, q=25, axis=0)
         p75 = np.percentile(mount_cont_trpo_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 43 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 43 pars.', color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(mount_cont_trpo_nn, axis=0)
         p25 = np.percentile(mount_cont_trpo_nn, q=25, axis=0)
         p75 = np.percentile(mount_cont_trpo_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 62 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 62 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(mount_cont_trpo_ten, axis=0)
         p25 = np.percentile(mount_cont_trpo_ten, q=25, axis=0)
         p75 = np.percentile(mount_cont_trpo_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 40 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 40 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
+
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xticks([0, 100, 200])
         ax.set_xlim(0, 200)
+        ax.set_ylim(-2000, 100)
         ax.set_xlabel("Episodes - TRPO")
         ax.grid()
-        
+
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
 
 
         plt.tight_layout()
         fig.savefig('figures/fig_2.jpg', dpi=300)
-        plt.show()
 
 
     with plt.style.context(['science'], ['ieee']):
@@ -248,120 +228,107 @@ def plot_control():
 
 
         # Pendulum Discrete
-
         ax = axs[0, 0]
-        
+
         med = np.median(pend_disc_rein_rbf, axis=0)
         p25 = np.percentile(pend_disc_rein_rbf, q=25, axis=0)
         p75 = np.percentile(pend_disc_rein_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 404 pars.', alpha=0.8)
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='RBF - 404 pars.', alpha=0.8, color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
+
         med = np.median(pend_disc_rein_nn, axis=0)
         p25 = np.percentile(pend_disc_rein_nn, q=25, axis=0)
         p75 = np.percentile(pend_disc_rein_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 772 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='NN - 772 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(pend_disc_rein_ten, axis=0)
         p25 = np.percentile(pend_disc_rein_ten, q=25, axis=0)
         p75 = np.percentile(pend_disc_rein_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 630 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 630 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
+
         ax.yaxis.set_major_formatter(OOMFormatter(3, "%1.2f"))
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 2_000)
         ax.set_xticks([0, 1_000, 2_000])
         ax.set_ylabel("Return - PendulumDisc")
         ax.grid()
-        
-        #ax.legend()
-        
-        ####
 
         ax = axs[0, 1]
-        
+
         med = np.median(pend_disc_ppo_rbf, axis=0)
         p25 = np.percentile(pend_disc_ppo_rbf, q=25, axis=0)
         p75 = np.percentile(pend_disc_ppo_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 404 pars.', alpha=0.8)
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 404 pars.', alpha=0.8, color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(pend_disc_ppo_nn, axis=0)
         p25 = np.percentile(pend_disc_ppo_nn, q=25, axis=0)
         p75 = np.percentile(pend_disc_ppo_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 772 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 772 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(pend_disc_ppo_ten, axis=0)
         p25 = np.percentile(pend_disc_ppo_ten, q=25, axis=0)
         p75 = np.percentile(pend_disc_ppo_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 630 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 630 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
+
         ax.yaxis.set_major_formatter(OOMFormatter(3, "%1.2f"))
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 2_000)
         ax.set_xticks([0, 1_000, 2_000])
         ax.grid()
-        
-        #ax.legend()
-        
-        ####
 
         ax = axs[0, 2]
-        
+
         med = np.median(pend_disc_trpo_rbf, axis=0)
         p25 = np.percentile(pend_disc_trpo_rbf, q=25, axis=0)
         p75 = np.percentile(pend_disc_trpo_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 404 pars.', alpha=0.8)
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 404 pars.', alpha=0.8, color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(pend_disc_trpo_nn, axis=0)
         p25 = np.percentile(pend_disc_trpo_nn, q=25, axis=0)
         p75 = np.percentile(pend_disc_trpo_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 772 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 772 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(pend_disc_trpo_ten, axis=0)
         p25 = np.percentile(pend_disc_trpo_ten, q=25, axis=0)
         p75 = np.percentile(pend_disc_trpo_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 630 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 630 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
+
         ax.yaxis.set_major_formatter(OOMFormatter(3, "%1.2f"))
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 4_000)
         ax.set_xticks([0, 2_000, 4_000])
         ax.grid()
-        
+
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
 
         # Mountaincar Discrete
         ax = axs[1, 0]
-        
+
         med = np.median(mount_disc_rein_rbf, axis=0)
         p25 = np.percentile(mount_disc_rein_rbf, q=25, axis=0)
         p75 = np.percentile(mount_disc_rein_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 204 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 204 pars.', color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(mount_disc_rein_nn, axis=0)
         p25 = np.percentile(mount_disc_rein_nn, q=25, axis=0)
         p75 = np.percentile(mount_disc_rein_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 84 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 84 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(mount_disc_rein_ten, axis=0)
         p25 = np.percentile(mount_disc_rein_ten, q=25, axis=0)
         p75 = np.percentile(mount_disc_rein_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 43 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 43 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
 
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 500)
@@ -369,69 +336,63 @@ def plot_control():
         ax.set_xlabel("Episodes - AC")
         ax.set_ylabel("Return - MountaincarDisc")
         ax.grid()
-        
-        #ax.legend()
 
-        ###
         ax = axs[1, 1]
-        
+
         med = np.median(mount_disc_ppo_rbf, axis=0)
         p25 = np.percentile(mount_disc_ppo_rbf, q=25, axis=0)
         p75 = np.percentile(mount_disc_ppo_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 204 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 204 pars.', color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(mount_disc_ppo_nn, axis=0)
         p25 = np.percentile(mount_disc_ppo_nn, q=25, axis=0)
         p75 = np.percentile(mount_disc_ppo_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 84 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 84 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
 
         med = np.median(mount_disc_ppo_ten, axis=0)
         p25 = np.percentile(mount_disc_ppo_ten, q=25, axis=0)
         p75 = np.percentile(mount_disc_ppo_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 43 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='TLR - 43 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
 
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 500)
         ax.set_xticks([0, 250, 500])
         ax.set_xlabel("Episodes - PPO")
         ax.grid()
-        
+
         #ax.legend()
-        
+
         ###
         ax = axs[1, 2]
-        
+
         med = np.median(mount_disc_trpo_rbf, axis=0)
         p25 = np.percentile(mount_disc_trpo_rbf, q=25, axis=0)
         p75 = np.percentile(mount_disc_trpo_rbf, q=75, axis=0)
-        ax.plot(med, label='RBF - 204 pars.', alpha=0.8)
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='RBF - 204 pars.', alpha=0.8, color='y')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='y')
 
         med = np.median(mount_disc_trpo_nn, axis=0)
         p25 = np.percentile(mount_disc_trpo_nn, q=25, axis=0)
         p75 = np.percentile(mount_disc_trpo_nn, q=75, axis=0)
-        ax.plot(med, label='NN - 84 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
-        
+        ax.plot(med, label='NN - 84 pars.', color='g')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='g')
+
         med = np.median(mount_disc_trpo_ten, axis=0)
         p25 = np.percentile(mount_disc_trpo_ten, q=25, axis=0)
         p75 = np.percentile(mount_disc_trpo_ten, q=75, axis=0)
-        ax.plot(med, label='TLR - 43 pars.')
-        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2)
+        ax.plot(med, label='TLR - 43 pars.', color='r')
+        ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
 
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
         ax.set_xlim(0, 10_000)
         ax.set_xticks([0, 5_000, 10_000])
         ax.set_xlabel("Episodes - TRPO")
         ax.grid()
-        
+
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
 
         plt.tight_layout()
         fig.savefig('figures/fig_3.jpg', dpi=300)
-        plt.show()
