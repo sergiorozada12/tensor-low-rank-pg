@@ -47,7 +47,7 @@ class ValueNetwork(torch.nn.Module):
 
 
 class PolicyPARAFAC(torch.nn.Module):
-    def __init__(self, dims, k, num_outputs, scale=1.0, bias=0.0, model='gaussian', max_sigma=0):
+    def __init__(self, dims, k, num_outputs=None, scale=1.0, bias=0.0, model='gaussian', max_sigma=0):
         super().__init__()
 
         self.k = k

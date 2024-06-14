@@ -125,33 +125,33 @@ def run_experiment_reinforce_ten(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
+    env = gym.make("MountainCar-v0")
+
+    discretizer = Discretizer(
+        min_points=[-1.2, -0.07],
+        max_points=[0.6, 0.07],
+        buckets=[10, 10],
+    )
+
+    actor = PolicyPARAFAC([10, 10, 3], 1, scale=0.01, model='softmax', bias=-1).double()
+    critic = ValuePARAFAC([10, 10], 1, 1.0, bias=-1).double()
+
+    agent = ReinforceSoftmaxNN(
+        actor,
+        critic,
+        n_a=3,
+        discretizer_actor=discretizer,
+        discretizer_critic=discretizer,
+        gamma=0.99,
+        tau=0.99,
+        lr_actor=1e-2,
+        epochs=20,
+        beta=0.1,
+        max_p=0.9,
+    )
+
+    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
     try:
-        env = gym.make("MountainCar-v0")
-
-        discretizer = Discretizer(
-            min_points=[-1.2, -0.07],
-            max_points=[0.6, 0.07],
-            buckets=[10, 10],
-        )
-
-        actor = PolicyPARAFAC([10, 10, 3], 1, scale=0.01, model='softmax', bias=-1).double()
-        critic = ValuePARAFAC([10, 10], 1, 1.0, bias=-1).double()
-
-        agent = ReinforceSoftmaxNN(
-            actor,
-            critic,
-            n_a=3,
-            discretizer_actor=discretizer,
-            discretizer_critic=discretizer,
-            gamma=0.99,
-            tau=0.99,
-            lr_actor=1e-2,
-            epochs=20,
-            beta=0.1,
-            max_p=0.9,
-        )
-
-        trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
         _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10_000, update_freq=20_000, initial_offset=10)
         return G
     except:
