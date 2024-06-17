@@ -331,8 +331,8 @@ def plot_control():
         ax.fill_between(range(p25.shape[0]), p25, p75, alpha=.2, color='r')
 
         ax.ticklabel_format(style = 'sci', axis='y', scilimits=(0,0))
-        ax.set_xlim(0, 500)
-        ax.set_xticks([0, 250, 500])
+        ax.set_xlim(0, 1_000)
+        ax.set_xticks([0, 500, 1_000])
         ax.set_xlabel("Episodes - AC")
         ax.set_ylabel("Return - MountaincarDisc")
         ax.grid()

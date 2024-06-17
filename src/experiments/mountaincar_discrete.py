@@ -45,7 +45,7 @@ def run_experiment_reinforce_nn(experiment_index):
         )
 
         trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-        _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10_000, update_freq=20_000, initial_offset=10)
+        _, G, _ = trainer.train(env, agent, epochs=1_000, max_steps=10_000, update_freq=20_000, initial_offset=10)
         return G
     except:
         return [0]*500
@@ -133,7 +133,7 @@ def run_experiment_reinforce_ten(experiment_index):
         buckets=[10, 10],
     )
 
-    actor = PolicyPARAFAC([10, 10, 3], 1, scale=0.01, model='softmax', bias=-1).double()
+    actor = PolicyPARAFAC([10, 10, 3], 1, scale=0.01, model='softmax', bias=0).double()
     critic = ValuePARAFAC([10, 10], 1, 1.0, bias=-1).double()
 
     agent = ReinforceSoftmaxNN(
@@ -152,7 +152,7 @@ def run_experiment_reinforce_ten(experiment_index):
 
     trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
     try:
-        _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10_000, update_freq=20_000, initial_offset=10)
+        _, G, _ = trainer.train(env, agent, epochs=1_000, max_steps=10_000, update_freq=20_000, initial_offset=10)
         return G
     except:
         return [0]*500
@@ -268,7 +268,7 @@ def run_experiment_reinforce_rbf(experiment_index):
         )
 
         trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-        _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10_000, update_freq=20_000, initial_offset=10)
+        _, G, _ = trainer.train(env, agent, epochs=1_000, max_steps=10_000, update_freq=20_000, initial_offset=10)
         return G
     except:
         return [0]*500
