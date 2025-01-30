@@ -12,7 +12,7 @@ This code belongs to a paper that has been submitted for publication in *IEEE Tr
 > This paper proposes tensor low-rank policies using PARAFAC decomposition to improve RL efficiency, reducing computational and sample complexities compared to neural networks.
 
 <p align="center">
-    <img src="figures/fig_2.jpg" alt="drawing" width="400"/>
+    <img src="figures/fig_2.jpg" alt="drawing" width="800"/>
 </p>
 
 
