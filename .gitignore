@@ -1,5 +1,6 @@
 results/
 results_/
+legacy_exps/
 *.out
 test*
 *.pth
