@@ -43,9 +43,9 @@ class WirelessCommunicationsEnv:
         batt_max_capacity: float = 50,  # Maximum capacity of the battery
         batt_weight: float = 1.0,  # Weight for the reward function
         queue_initial: float = 20,  # Initial size of the queue
-        queue_arrival: float = 20, # Arrival messages
+        queue_arrival: float = 20,  # Arrival messages
         queue_max_capacity: float = 20,
-        t_queue_arrival: int = 10, # Refilling of the queue
+        t_queue_arrival: int = 10,  # Refilling of the queue
         queue_weight: float = 1e-1,  # Weight for the reward function
         loss_busy: float = 0.80,  # Loss in the channel when busy
     ) -> None:
@@ -90,7 +90,7 @@ class WirelessCommunicationsEnv:
         self.h[:, self.t] *= np.sqrt(1 - self.snr_autocorr)
         self.h[:, self.t] += np.sqrt(self.snr_autocorr) * self.h[:, self.t - 1]
         self.g[:, self.t] = np.abs(self.h[:, self.t]) ** 2
-        
+
         # self.P_occ[1, 1] -> prob getting unocc
         self.occ[:, self.t] += (np.random.rand(self.K) > self.P_occ[1, 1]) * self.occ[
             :, self.t - 1
@@ -109,14 +109,17 @@ class WirelessCommunicationsEnv:
         if self.batt[self.t - 1] > 0:
             packets = np.sum(self.c[:, self.t - 1])
         self.queue[self.t] = self.queue[self.t - 1] - packets
-        
+
         if self.t % self.t_queue_arrival == 0:
             noise = np.random.randint(5) - 2
             self.queue[self.t] += self.queue_arrival + noise
-            
+
         self.queue[self.t] = np.clip(self.queue[self.t], 0, self.queue_max_capacity)
 
-        r = (self.batt_weight * np.log(1 + self.batt[self.t]) - self.queue_weight * self.queue[self.t])
+        r = (
+            self.batt_weight * np.log(1 + self.batt[self.t])
+            - self.queue_weight * self.queue[self.t]
+        )
         done = self.t == self.T
 
         return self._get_obs(self.t), r, done, None, None
@@ -143,4 +146,4 @@ class WirelessCommunicationsEnv:
     def _get_obs(self, t):
         return np.concatenate(
             [self.g[:, t], self.occ[:, t], [self.queue[t], self.batt[t]]]
-    )
+        )

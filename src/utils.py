@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib
 
+
 class Buffer:
     def __init__(self):
         self.actions = []
@@ -27,7 +28,7 @@ class Discretizer:
         max_points,
         buckets,
         dimensions=None,
-        ):
+    ):
 
         self.min_points = np.array(min_points)
         self.max_points = np.array(max_points)
@@ -45,8 +46,14 @@ class Discretizer:
             self.N = np.prod(self.row_n_states)
             self.M = np.prod(self.col_n_states)
 
-            self.row_offset = [int(np.prod(self.row_n_states[i + 1:])) for i in range(len(self.row_n_states))]
-            self.col_offset = [int(np.prod(self.col_n_states[i + 1:])) for i in range(len(self.col_n_states))]
+            self.row_offset = [
+                int(np.prod(self.row_n_states[i + 1 :]))
+                for i in range(len(self.row_n_states))
+            ]
+            self.col_offset = [
+                int(np.prod(self.col_n_states[i + 1 :]))
+                for i in range(len(self.col_n_states))
+            ]
 
     def get_index(self, state):
         state = np.clip(state, a_min=self.min_points, a_max=self.max_points)
@@ -57,12 +64,12 @@ class Discretizer:
             return idx
 
         row_idx = idx[:, self.dimensions[0]]
-        row = np.sum(row_idx*self.row_offset, axis=1)
+        row = np.sum(row_idx * self.row_offset, axis=1)
 
         col = None
         if self.dimensions[1]:
             col_idx = idx[:, self.dimensions[1]]
-            col = np.sum(col_idx*self.col_offset, axis=1)
+            col = np.sum(col_idx * self.col_offset, axis=1)
 
         return [row, col]
 
@@ -71,10 +78,14 @@ class OOMFormatter(matplotlib.ticker.ScalarFormatter):
     def __init__(self, order=0, fformat="%1.1f", offset=True, mathText=True):
         self.oom = order
         self.fformat = fformat
-        matplotlib.ticker.ScalarFormatter.__init__(self,useOffset=offset,useMathText=mathText)
+        matplotlib.ticker.ScalarFormatter.__init__(
+            self, useOffset=offset, useMathText=mathText
+        )
+
     def _set_order_of_magnitude(self):
         self.orderOfMagnitude = self.oom
+
     def _set_format(self, vmin=None, vmax=None):
         self.format = self.fformat
         if self._useMathText:
-            self.format = r'$\mathdefault{%s}$' % self.format
+            self.format = r"$\mathdefault{%s}$" % self.format

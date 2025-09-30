@@ -10,6 +10,7 @@ from torch.nn.utils.convert_parameters import vector_to_parameters
 from src.utils import Buffer
 from src.agents.agents import GaussianAgent, SoftmaxAgent
 
+
 class TRPOGaussianNN:
     def __init__(
         self,
@@ -17,12 +18,12 @@ class TRPOGaussianNN:
         critic,
         discretizer_actor=None,
         discretizer_critic=None,
-        gamma: float=0.99,
+        gamma: float = 0.99,
         tau=0.97,
-        delta: float=.01,
-        cg_dampening: float=0.001,
-        cg_tolerance: float=1e-10,
-        cg_iteration: float=10,
+        delta: float = 0.01,
+        cg_dampening: float = 0.001,
+        cg_tolerance: float = 1e-10,
+        cg_iteration: float = 10,
     ) -> None:
 
         self.gamma = gamma
@@ -38,14 +39,18 @@ class TRPOGaussianNN:
         actor_old = deepcopy(actor)
         critic_old = deepcopy(critic)
 
-        self.policy = GaussianAgent(actor, critic, discretizer_actor, discretizer_critic)
-        self.policy_old = GaussianAgent(actor_old, critic_old, discretizer_actor, discretizer_critic)
+        self.policy = GaussianAgent(
+            actor, critic, discretizer_actor, discretizer_critic
+        )
+        self.policy_old = GaussianAgent(
+            actor_old, critic_old, discretizer_actor, discretizer_critic
+        )
 
         self.opt_critic = torch.optim.LBFGS(
             self.policy.critic.parameters(),
             history_size=100,
             max_iter=25,
-            line_search_fn='strong_wolfe',
+            line_search_fn="strong_wolfe",
         )
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
@@ -61,7 +66,7 @@ class TRPOGaussianNN:
 
     def calculate_returns(self, values) -> List[float]:
         returns = []
-        advantages=[]
+        advantages = []
 
         prev_return = 0
         prev_value = 0
@@ -70,9 +75,11 @@ class TRPOGaussianNN:
             reward = self.buffer.rewards[i]
             mask = 1 - self.buffer.terminals[i]
 
-            actual_return = reward + self.gamma*prev_return*mask
-            actual_delta = reward + self.gamma*prev_value*mask - values[i]
-            actual_advantage = actual_delta + self.gamma*self.tau*prev_advantage*mask        
+            actual_return = reward + self.gamma * prev_return * mask
+            actual_delta = reward + self.gamma * prev_value * mask - values[i]
+            actual_advantage = (
+                actual_delta + self.gamma * self.tau * prev_advantage * mask
+            )
 
             returns.insert(0, actual_return)
             advantages.insert(0, actual_advantage)
@@ -83,7 +90,7 @@ class TRPOGaussianNN:
 
         returns = torch.as_tensor(returns).double().detach().squeeze()
         advantages = torch.as_tensor(advantages).double().detach().squeeze()
-        advantages = (advantages - advantages.mean())/advantages.std()
+        advantages = (advantages - advantages.mean()) / advantages.std()
 
         return returns, advantages
 
@@ -104,18 +111,17 @@ class TRPOGaussianNN:
             mu1 = mu1.detach()
             log_sigma1 = log_sigma1.detach()
 
-        kl = ((log_sigma2 - log_sigma1) + 0.5 * (log_sigma1.exp().pow(2)
-            + (mu1 - mu2).pow(2)) / log_sigma2.exp().pow(2) - 0.5)
+        kl = (
+            (log_sigma2 - log_sigma1)
+            + 0.5
+            * (log_sigma1.exp().pow(2) + (mu1 - mu2).pow(2))
+            / log_sigma2.exp().pow(2)
+            - 0.5
+        )
 
         return kl.sum(1).mean()
 
-    def loss_actor(
-            self,
-            states,
-            actions,
-            old_logprobs,
-            advantages
-    ):
+    def loss_actor(self, states, actions, old_logprobs, advantages):
         logprobs = self.policy.evaluate_logprob(states, actions)
         if logprobs.dim() > 1:
             logprobs = logprobs.sum(dim=1)
@@ -133,22 +139,22 @@ class TRPOGaussianNN:
         gradients,
         expected_improve_rate,
         max_backtracks=10,
-        accept_ratio=.1
+        accept_ratio=0.1,
     ):
         with torch.no_grad():
             loss = self.loss_actor(states, actions, old_logprobs, advantages)
 
-        weights = 0.5**np.arange(max_backtracks)
+        weights = 0.5 ** np.arange(max_backtracks)
         for weight in weights:
-            params_new = params_flat + weight*gradients
+            params_new = params_flat + weight * gradients
             vector_to_parameters(params_new, params)
 
             with torch.no_grad():
                 loss_new = self.loss_actor(states, actions, old_logprobs, advantages)
 
             actual_improve = loss_new - loss
-            expected_improve = expected_improve_rate*weight
-            ratio = actual_improve/expected_improve
+            expected_improve = expected_improve_rate * weight
+            ratio = actual_improve / expected_improve
 
             if ratio.item() > accept_ratio and actual_improve.item() > 0:
                 return params_new
@@ -160,16 +166,18 @@ class TRPOGaussianNN:
         self.policy.actor.zero_grad()
         kl_penalty = self.kl_penalty(states)
         grad_kl = torch.autograd.grad(kl_penalty, params, create_graph=True)
-        
+
         grad_kl = torch.cat([grad.view(-1) for grad in grad_kl])
 
         grad_vector_dot = grad_kl.dot(vector)
         fisher_vector_product = torch.autograd.grad(grad_vector_dot, params)
-        fisher_vector_product = torch.cat([out.view(-1) for out in fisher_vector_product]).detach()
+        fisher_vector_product = torch.cat(
+            [out.view(-1) for out in fisher_vector_product]
+        ).detach()
 
-        return fisher_vector_product + self.cg_dampening*vector.detach()
+        return fisher_vector_product + self.cg_dampening * vector.detach()
 
-    def conjugate_gradient(self, b, states, params):    
+    def conjugate_gradient(self, b, states, params):
         x = torch.zeros(*b.shape)
         d = b.clone()
         r = b.clone()
@@ -211,6 +219,7 @@ class TRPOGaussianNN:
                 loss.backward()
                 self.zero_grad(self.policy.critic, idx)
             return loss
+
         self.opt_critic.step(closure)
 
         return advantages
@@ -238,9 +247,11 @@ class TRPOGaussianNN:
         # Actor - Conjugate Gradient Ascent
         direction = self.conjugate_gradient(grads, states, params)
         direction_hessian_norm = direction.dot(self.fvp(direction, states, params))
-        lagrange_multiplier = torch.sqrt(2*self.delta/(direction_hessian_norm + 1e-10))
+        lagrange_multiplier = torch.sqrt(
+            2 * self.delta / (direction_hessian_norm + 1e-10)
+        )
 
-        grads_opt = lagrange_multiplier*direction
+        grads_opt = lagrange_multiplier * direction
 
         # Actor - Line search backtracking
         expected_improvement = grads.dot(grads_opt)
@@ -252,7 +263,7 @@ class TRPOGaussianNN:
             params,
             params_flat,
             grads_opt,
-            expected_improvement
+            expected_improvement,
         )
         vector_to_parameters(params_flat, params)
         vector_to_parameters(params_flat, params_old)
@@ -266,14 +277,14 @@ class TRPOSoftmaxNN:
         n_a,
         discretizer_actor=None,
         discretizer_critic=None,
-        gamma: float=0.99,
-        tau: float=0.97,
-        delta: float=.01,
-        cg_dampening: float=0.001,
-        cg_tolerance: float=1e-10,
-        cg_iteration: float=10,
-        beta: float=1.0,
-        max_p: float=0.99,
+        gamma: float = 0.99,
+        tau: float = 0.97,
+        delta: float = 0.01,
+        cg_dampening: float = 0.001,
+        cg_tolerance: float = 1e-10,
+        cg_iteration: float = 10,
+        beta: float = 1.0,
+        max_p: float = 0.99,
     ) -> None:
 
         self.gamma = gamma
@@ -288,14 +299,24 @@ class TRPOSoftmaxNN:
         actor_old = deepcopy(actor)
         critic_old = deepcopy(critic)
 
-        self.policy = SoftmaxAgent(actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p)
-        self.policy_old = SoftmaxAgent(actor_old, critic_old, n_a, discretizer_actor, discretizer_critic, beta, max_p)
+        self.policy = SoftmaxAgent(
+            actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p
+        )
+        self.policy_old = SoftmaxAgent(
+            actor_old,
+            critic_old,
+            n_a,
+            discretizer_actor,
+            discretizer_critic,
+            beta,
+            max_p,
+        )
 
         self.opt_critic = torch.optim.LBFGS(
             self.policy.critic.parameters(),
             history_size=100,
             max_iter=25,
-            line_search_fn='strong_wolfe',
+            line_search_fn="strong_wolfe",
         )
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
@@ -311,7 +332,7 @@ class TRPOSoftmaxNN:
 
     def calculate_returns(self, values) -> List[float]:
         returns = []
-        advantages=[]
+        advantages = []
 
         prev_return = 0
         prev_value = 0
@@ -320,9 +341,11 @@ class TRPOSoftmaxNN:
             reward = self.buffer.rewards[i]
             mask = 1 - self.buffer.terminals[i]
 
-            actual_return = reward + self.gamma*prev_return*mask
-            actual_delta = reward + self.gamma*prev_value*mask - values[i]
-            actual_advantage = actual_delta + self.gamma*self.tau*prev_advantage*mask        
+            actual_return = reward + self.gamma * prev_return * mask
+            actual_delta = reward + self.gamma * prev_value * mask - values[i]
+            actual_advantage = (
+                actual_delta + self.gamma * self.tau * prev_advantage * mask
+            )
 
             returns.insert(0, actual_return)
             advantages.insert(0, actual_advantage)
@@ -333,22 +356,16 @@ class TRPOSoftmaxNN:
 
         returns = torch.as_tensor(returns).double().detach().squeeze()
         advantages = torch.as_tensor(advantages).double().detach().squeeze()
-        advantages = (advantages - advantages.mean())/advantages.std()
+        advantages = (advantages - advantages.mean()) / advantages.std()
 
         return returns, advantages
 
     def kl_penalty(self, states, actions, old_logprobs):
         logprobs = self.policy.evaluate_logprob(states, actions)
-        kl = torch.nn.functional.kl_div(logprobs, old_logprobs, log_target=True)   
+        kl = torch.nn.functional.kl_div(logprobs, old_logprobs, log_target=True)
         return kl
 
-    def loss_actor(
-            self,
-            states,
-            actions,
-            old_logprobs,
-            advantages
-    ):
+    def loss_actor(self, states, actions, old_logprobs, advantages):
         logprobs = self.policy.evaluate_logprob(states, actions)
         ratio = torch.exp(logprobs - old_logprobs)
         return torch.mean(ratio * advantages)
@@ -364,49 +381,51 @@ class TRPOSoftmaxNN:
         gradients,
         expected_improve_rate,
         max_backtracks=10,
-        accept_ratio=.1
+        accept_ratio=0.1,
     ):
         with torch.no_grad():
             loss = self.loss_actor(states, actions, old_logprobs, advantages)
 
-        weights = 0.5**np.arange(max_backtracks)
+        weights = 0.5 ** np.arange(max_backtracks)
         for weight in weights:
-            params_new = params_flat + weight*gradients
+            params_new = params_flat + weight * gradients
             vector_to_parameters(params_new, params)
 
             with torch.no_grad():
                 loss_new = self.loss_actor(states, actions, old_logprobs, advantages)
 
             actual_improve = loss_new - loss
-            expected_improve = expected_improve_rate*weight
-            ratio = actual_improve/expected_improve
+            expected_improve = expected_improve_rate * weight
+            ratio = actual_improve / expected_improve
 
             if ratio.item() > accept_ratio and actual_improve.item() > 0:
                 return params_new
         return params_flat
 
-    def fvp(self, vector, states, params,actions, old_logprobs):
+    def fvp(self, vector, states, params, actions, old_logprobs):
         vector = vector.clone().requires_grad_()
 
         self.policy.actor.zero_grad()
-        kl_penalty = self.kl_penalty(states,actions, old_logprobs)
+        kl_penalty = self.kl_penalty(states, actions, old_logprobs)
         grad_kl = torch.autograd.grad(kl_penalty, params, create_graph=True)
-        
+
         grad_kl = torch.cat([grad.view(-1) for grad in grad_kl])
 
         grad_vector_dot = grad_kl.dot(vector)
         fisher_vector_product = torch.autograd.grad(grad_vector_dot, params)
-        fisher_vector_product = torch.cat([out.view(-1) for out in fisher_vector_product]).detach()
+        fisher_vector_product = torch.cat(
+            [out.view(-1) for out in fisher_vector_product]
+        ).detach()
 
-        return fisher_vector_product + self.cg_dampening*vector.detach()
+        return fisher_vector_product + self.cg_dampening * vector.detach()
 
-    def conjugate_gradient(self, b, states, params,actions, old_logprobs):    
+    def conjugate_gradient(self, b, states, params, actions, old_logprobs):
         x = torch.zeros(*b.shape)
         d = b.clone()
         r = b.clone()
         rr = r.dot(r)
         for _ in range(self.cg_iteration):
-            Hd = self.fvp(d, states, params,actions, old_logprobs)
+            Hd = self.fvp(d, states, params, actions, old_logprobs)
             alpha = rr / (d.dot(Hd) + 1e-10)
             x = x + alpha * d
             r = r - alpha * Hd
@@ -442,6 +461,7 @@ class TRPOSoftmaxNN:
                 loss.backward()
                 self.zero_grad(self.policy.critic, idx)
             return loss
+
         self.opt_critic.step(closure)
 
         return advantages
@@ -466,11 +486,17 @@ class TRPOSoftmaxNN:
         params_flat = parameters_to_vector([param for param in params])
 
         # Actor - Conjugate Gradient Ascent
-        direction = self.conjugate_gradient(grads, states, params,actions, old_logprobs)
-        direction_hessian_norm = direction.dot(self.fvp(direction, states, params,actions, old_logprobs))
-        lagrange_multiplier = torch.sqrt(2*self.delta/(direction_hessian_norm + 1e-10))
+        direction = self.conjugate_gradient(
+            grads, states, params, actions, old_logprobs
+        )
+        direction_hessian_norm = direction.dot(
+            self.fvp(direction, states, params, actions, old_logprobs)
+        )
+        lagrange_multiplier = torch.sqrt(
+            2 * self.delta / (direction_hessian_norm + 1e-10)
+        )
 
-        grads_opt = lagrange_multiplier*direction
+        grads_opt = lagrange_multiplier * direction
 
         # Actor - Line search backtracking
         expected_improvement = grads.dot(grads_opt)
@@ -482,7 +508,7 @@ class TRPOSoftmaxNN:
             params,
             params_flat,
             grads_opt,
-            expected_improvement
+            expected_improvement,
         )
         vector_to_parameters(params_flat, params)
         vector_to_parameters(params_flat, params_old)

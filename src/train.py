@@ -7,14 +7,14 @@ class Trainer:
         self.critic_opt = critic_opt
 
     def _update(self, agent):
-        if self.actor_opt == 'bcd':
+        if self.actor_opt == "bcd":
             n_params_critic = len(list(agent.policy.critic.parameters()))
             for i in range(n_params_critic):
                 advantages = agent.update_critic(i)
         else:
             advantages = agent.update_critic()
 
-        if self.critic_opt == 'bcd':
+        if self.critic_opt == "bcd":
             n_params_actor = len(list(agent.policy.actor.parameters()))
             for i in range(n_params_actor):
                 agent.update_actor(advantages, i)
@@ -60,5 +60,5 @@ class Trainer:
                 state = state_next
             returns.append(cum_reward)
             timesteps.append(t)
-            print(f'{epoch}/{epochs}: {returns[-1]} \r', end='')
+            print(f"{epoch}/{epochs}: {returns[-1]} \r", end="")
         return agent, returns, timesteps

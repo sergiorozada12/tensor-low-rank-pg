@@ -13,7 +13,7 @@ from src.models import (
     PolicyPARAFAC,
     ValuePARAFAC,
     PolicyRBF,
-    ValueRBF
+    ValueRBF,
 )
 
 
@@ -32,26 +32,26 @@ def run_dqn_small(n):
         snr_min=2,
         snr_autocorr=0.7,
         P_occ=np.array(
-            [  
+            [
                 [0.4, 0.6],
                 [0.6, 0.4],
             ]
         ),
         occ_initial=[1, 1],
-        batt_harvest=1.0, 
-        P_harvest=0.2, 
+        batt_harvest=1.0,
+        P_harvest=0.2,
         batt_initial=5,
-        batt_max_capacity=10,  
-        batt_weight=1.0, 
+        batt_max_capacity=10,
+        batt_weight=1.0,
         queue_initial=10,
         queue_arrival=5,
         queue_max_capacity=20,
         t_queue_arrival=10,
         queue_weight=0.2,
-        loss_busy=0.8,  
+        loss_busy=0.8,
     )
-    
-    actor = PolicyNetwork(6, [64], 2, model='gaussian').double()
+
+    actor = PolicyNetwork(6, [64], 2, model="gaussian").double()
     critic = ValueNetwork(6, [64], 1).double()
 
     agent = PPOGaussianNN(
@@ -65,8 +65,8 @@ def run_dqn_small(n):
     )
 
     trainer = Trainer(
-        actor_opt='sgd',
-        critic_opt='sgd',
+        actor_opt="sgd",
+        critic_opt="sgd",
     )
 
     _, G, _ = trainer.train(
@@ -93,26 +93,26 @@ def run_dqn_big(n):
         snr_min=2,
         snr_autocorr=0.7,
         P_occ=np.array(
-            [  
+            [
                 [0.4, 0.6],
                 [0.6, 0.4],
             ]
         ),
         occ_initial=[1, 1],
-        batt_harvest=1.0, 
-        P_harvest=0.2, 
+        batt_harvest=1.0,
+        P_harvest=0.2,
         batt_initial=5,
-        batt_max_capacity=10,  
-        batt_weight=1.0, 
+        batt_max_capacity=10,
+        batt_weight=1.0,
         queue_initial=10,
         queue_arrival=5,
         queue_max_capacity=20,
         t_queue_arrival=10,
         queue_weight=0.2,
-        loss_busy=0.8,  
+        loss_busy=0.8,
     )
-    
-    actor = PolicyNetwork(6, [64], 2, model='gaussian').double()
+
+    actor = PolicyNetwork(6, [64], 2, model="gaussian").double()
     critic = ValueNetwork(6, [64], 1).double()
 
     agent = PPOGaussianNN(
@@ -126,8 +126,8 @@ def run_dqn_big(n):
     )
 
     trainer = Trainer(
-        actor_opt='sgd',
-        critic_opt='sgd',
+        actor_opt="sgd",
+        critic_opt="sgd",
     )
 
     _, G, _ = trainer.train(
@@ -154,23 +154,23 @@ def run_tlr(n):
         snr_min=2,
         snr_autocorr=0.7,
         P_occ=np.array(
-            [  
+            [
                 [0.4, 0.6],
                 [0.6, 0.4],
             ]
         ),
         occ_initial=[1, 1],
-        batt_harvest=1.0, 
-        P_harvest=0.2, 
+        batt_harvest=1.0,
+        P_harvest=0.2,
         batt_initial=5,
-        batt_max_capacity=10,  
-        batt_weight=1.0, 
+        batt_max_capacity=10,
+        batt_weight=1.0,
         queue_initial=10,
         queue_arrival=5,
         queue_max_capacity=20,
         t_queue_arrival=10,
         queue_weight=0.2,
-        loss_busy=0.8,  
+        loss_busy=0.8,
     )
 
     discretizer = Discretizer(
@@ -179,7 +179,14 @@ def run_tlr(n):
         buckets=[10, 10, 2, 2, 10, 10],
     )
 
-    actor = PolicyPARAFAC([10, 10, 2, 2, 10, 10, 2], k=10, num_outputs=2, model='gaussian', scale=0.5, bias=1.0).double()
+    actor = PolicyPARAFAC(
+        [10, 10, 2, 2, 10, 10, 2],
+        k=10,
+        num_outputs=2,
+        model="gaussian",
+        scale=0.5,
+        bias=1.0,
+    ).double()
     critic = ValuePARAFAC([10, 10, 2, 2, 10, 10], k=10, scale=1.0).double()
 
     agent = PPOGaussianNN(
@@ -195,8 +202,8 @@ def run_tlr(n):
     )
 
     trainer = Trainer(
-        actor_opt='sgd',
-        critic_opt='sgd',
+        actor_opt="sgd",
+        critic_opt="sgd",
     )
 
     try:
@@ -225,26 +232,26 @@ def run_rbf(n):
         snr_min=2,
         snr_autocorr=0.7,
         P_occ=np.array(
-            [  
+            [
                 [0.4, 0.6],
                 [0.6, 0.4],
             ]
         ),
         occ_initial=[1, 1],
-        batt_harvest=1.0, 
-        P_harvest=0.2, 
+        batt_harvest=1.0,
+        P_harvest=0.2,
         batt_initial=5,
-        batt_max_capacity=10,  
-        batt_weight=1.0, 
+        batt_max_capacity=10,
+        batt_weight=1.0,
         queue_initial=10,
         queue_arrival=5,
         queue_max_capacity=20,
         t_queue_arrival=10,
         queue_weight=0.2,
-        loss_busy=0.8,  
+        loss_busy=0.8,
     )
 
-    actor = PolicyRBF(6, 100, 2, model='gaussian').double()
+    actor = PolicyRBF(6, 100, 2, model="gaussian").double()
     critic = ValueRBF(6, 100, 1).double()
 
     agent = PPOGaussianNN(
@@ -252,14 +259,14 @@ def run_rbf(n):
         critic=critic,
         gamma=0.9,
         tau=0.99,
-        lr_actor=1e-2, # 1e-3
+        lr_actor=1e-2,  # 1e-3
         epochs=1,
         eps_clip=0.2,
     )
 
     trainer = Trainer(
-        actor_opt='sgd',
-        critic_opt='sgd',
+        actor_opt="sgd",
+        critic_opt="sgd",
     )
 
     _, G, _ = trainer.train(
@@ -275,16 +282,13 @@ def run_rbf(n):
 
 def run_paralell(func, filename, num_experiments, num_processes):
     with multiprocessing.Pool(processes=num_processes) as pool:
-        results = pool.map(
-            func,
-            range(num_experiments)
-        )
+        results = pool.map(func, range(num_experiments))
     results = np.array(results)
     np.save(f"results/{filename}.npy", results)
 
 
 def run_wireless_experiments(nexps, nprocs):
-    run_paralell(run_dqn_small, 'wireless_nn_small', nexps, nprocs)
-    run_paralell(run_dqn_big, 'wireless_nn_big', nexps, nprocs)
-    run_paralell(run_tlr, 'wireless_ten', nexps, nprocs)
-    run_paralell(run_rbf, 'wireless_rbf', nexps, nprocs)
+    run_paralell(run_dqn_small, "wireless_nn_small", nexps, nprocs)
+    run_paralell(run_dqn_big, "wireless_nn_big", nexps, nprocs)
+    run_paralell(run_tlr, "wireless_ten", nexps, nprocs)
+    run_paralell(run_rbf, "wireless_rbf", nexps, nprocs)

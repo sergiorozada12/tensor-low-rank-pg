@@ -9,29 +9,31 @@ from src.utils import Buffer
 
 class ReinforceGaussianNN:
     def __init__(
-            self,
-            actor,
-            critic,
-            discretizer_actor=None,
-            discretizer_critic=None,
-            gamma=0.99,
-            tau=0.97,
-            epochs: int=1000,
-            lr_actor=1e-2,
-        ):
+        self,
+        actor,
+        critic,
+        discretizer_actor=None,
+        discretizer_critic=None,
+        gamma=0.99,
+        tau=0.97,
+        epochs: int = 1000,
+        lr_actor=1e-2,
+    ):
         self.gamma = gamma
         self.tau = tau
         self.epochs = epochs
 
         self.buffer = Buffer()
-        self.policy = GaussianAgent(actor, critic, discretizer_actor, discretizer_critic)
+        self.policy = GaussianAgent(
+            actor, critic, discretizer_actor, discretizer_critic
+        )
         self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
 
         self.opt_critic = torch.optim.LBFGS(
             self.policy.critic.parameters(),
             history_size=100,
             max_iter=25,
-            line_search_fn='strong_wolfe',
+            line_search_fn="strong_wolfe",
         )
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
@@ -47,7 +49,7 @@ class ReinforceGaussianNN:
 
     def calculate_returns(self, values) -> List[float]:
         returns = []
-        advantages=[]
+        advantages = []
 
         prev_return = 0
         prev_value = 0
@@ -56,9 +58,11 @@ class ReinforceGaussianNN:
             reward = self.buffer.rewards[i]
             mask = 1 - self.buffer.terminals[i]
 
-            actual_return = reward + self.gamma*prev_return*mask
-            actual_delta = reward + self.gamma*prev_value*mask - values[i]
-            actual_advantage = actual_delta + self.gamma*self.tau*prev_advantage*mask        
+            actual_return = reward + self.gamma * prev_return * mask
+            actual_delta = reward + self.gamma * prev_value * mask - values[i]
+            actual_advantage = (
+                actual_delta + self.gamma * self.tau * prev_advantage * mask
+            )
 
             returns.insert(0, actual_return)
             advantages.insert(0, actual_advantage)
@@ -69,7 +73,7 @@ class ReinforceGaussianNN:
 
         returns = torch.as_tensor(returns).double().detach().squeeze()
         advantages = torch.as_tensor(advantages).double().detach().squeeze()
-        advantages = (advantages - advantages.mean())/advantages.std()
+        advantages = (advantages - advantages.mean()) / advantages.std()
 
         return returns, advantages
 
@@ -97,6 +101,7 @@ class ReinforceGaussianNN:
                 loss.backward()
                 self.zero_grad(self.policy.critic, idx)
             return loss
+
         self.opt_critic.step(closure)
 
         return advantages
@@ -108,7 +113,7 @@ class ReinforceGaussianNN:
         # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(states, actions)
-            loss_actor = -logprobs*advantages
+            loss_actor = -logprobs * advantages
             self.opt_actor.zero_grad()
             loss_actor.mean().backward()
             self.zero_grad(self.policy.actor, idx)
@@ -117,32 +122,34 @@ class ReinforceGaussianNN:
 
 class ReinforceSoftmaxNN:
     def __init__(
-            self,
-            actor,
-            critic,
-            n_a,
-            discretizer_actor=None,
-            discretizer_critic=None,
-            gamma=0.99,
-            tau=0.97,
-            epochs: int=1000,
-            lr_actor=1e-2,
-            beta=1.0,
-            max_p=0.99,
-        ):
+        self,
+        actor,
+        critic,
+        n_a,
+        discretizer_actor=None,
+        discretizer_critic=None,
+        gamma=0.99,
+        tau=0.97,
+        epochs: int = 1000,
+        lr_actor=1e-2,
+        beta=1.0,
+        max_p=0.99,
+    ):
         self.gamma = gamma
         self.tau = tau
         self.epochs = epochs
 
         self.buffer = Buffer()
-        self.policy = SoftmaxAgent(actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p)
+        self.policy = SoftmaxAgent(
+            actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p
+        )
         self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
 
         self.opt_critic = torch.optim.LBFGS(
             self.policy.critic.parameters(),
             history_size=100,
             max_iter=25,
-            line_search_fn='strong_wolfe',
+            line_search_fn="strong_wolfe",
         )
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
@@ -158,7 +165,7 @@ class ReinforceSoftmaxNN:
 
     def calculate_returns(self, values) -> List[float]:
         returns = []
-        advantages=[]
+        advantages = []
 
         prev_return = 0
         prev_value = 0
@@ -167,9 +174,11 @@ class ReinforceSoftmaxNN:
             reward = self.buffer.rewards[i]
             mask = 1 - self.buffer.terminals[i]
 
-            actual_return = reward + self.gamma*prev_return*mask
-            actual_delta = reward + self.gamma*prev_value*mask - values[i]
-            actual_advantage = actual_delta + self.gamma*self.tau*prev_advantage*mask        
+            actual_return = reward + self.gamma * prev_return * mask
+            actual_delta = reward + self.gamma * prev_value * mask - values[i]
+            actual_advantage = (
+                actual_delta + self.gamma * self.tau * prev_advantage * mask
+            )
 
             returns.insert(0, actual_return)
             advantages.insert(0, actual_advantage)
@@ -180,7 +189,7 @@ class ReinforceSoftmaxNN:
 
         returns = torch.as_tensor(returns).double().detach().squeeze()
         advantages = torch.as_tensor(advantages).double().detach().squeeze()
-        advantages = (advantages - advantages.mean())/advantages.std()
+        advantages = (advantages - advantages.mean()) / advantages.std()
 
         return returns, advantages
 
@@ -208,6 +217,7 @@ class ReinforceSoftmaxNN:
                 loss.backward()
                 self.zero_grad(self.policy.critic, idx)
             return loss
+
         self.opt_critic.step(closure)
 
         return advantages
@@ -219,7 +229,7 @@ class ReinforceSoftmaxNN:
         # Stochastic Gradient Ascent
         for _ in range(self.epochs):
             logprobs = self.policy.evaluate_logprob(states, actions)
-            loss_actor = -logprobs*advantages
+            loss_actor = -logprobs * advantages
             self.opt_actor.zero_grad()
             loss_actor.mean().backward()
             self.zero_grad(self.policy.actor, idx)

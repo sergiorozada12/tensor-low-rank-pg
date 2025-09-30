@@ -2,7 +2,9 @@ import torch
 
 
 class PolicyNetwork(torch.nn.Module):
-    def __init__(self, num_inputs, num_hiddens, num_outputs, model='gaussian', max_sigma=0.0):
+    def __init__(
+        self, num_inputs, num_hiddens, num_outputs, model="gaussian", max_sigma=0.0
+    ):
         super(PolicyNetwork, self).__init__()
         self.layers = torch.nn.ModuleList()
         self.max_sigma = max_sigma
@@ -16,13 +18,13 @@ class PolicyNetwork(torch.nn.Module):
         self.layers.append(action_layer)
 
         self.model = model
-        if model == 'gaussian':
+        if model == "gaussian":
             self.log_sigma = torch.nn.Parameter(torch.zeros(1, num_outputs) + max_sigma)
 
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
-        if self.model == 'gaussian':
+        if self.model == "gaussian":
             return x, torch.clamp(self.log_sigma, min=-2.0, max=self.max_sigma)
         return x
 
@@ -47,7 +49,16 @@ class ValueNetwork(torch.nn.Module):
 
 
 class PolicyPARAFAC(torch.nn.Module):
-    def __init__(self, dims, k, num_outputs=None, scale=1.0, bias=0.0, model='gaussian', max_sigma=0):
+    def __init__(
+        self,
+        dims,
+        k,
+        num_outputs=None,
+        scale=1.0,
+        bias=0.0,
+        model="gaussian",
+        max_sigma=0,
+    ):
         super().__init__()
 
         self.k = k
@@ -56,12 +67,14 @@ class PolicyPARAFAC(torch.nn.Module):
 
         factors = []
         for dim in dims:
-            factor = scale * (torch.randn(dim, k, dtype=torch.double, requires_grad=True) + bias)
+            factor = scale * (
+                torch.randn(dim, k, dtype=torch.double, requires_grad=True) + bias
+            )
             factors.append(torch.nn.Parameter(factor))
         self.factors = torch.nn.ParameterList(factors)
 
         self.model = model
-        if model == 'gaussian':
+        if model == "gaussian":
             self.log_sigma = torch.nn.Parameter(torch.zeros(1, num_outputs) + max_sigma)
 
     def forward(self, indices):
@@ -75,7 +88,7 @@ class PolicyPARAFAC(torch.nn.Module):
             res = torch.matmul(prod, self.factors[-1].T)
         else:
             res = torch.sum(prod, dim=-1)
-        if self.model == 'gaussian':
+        if self.model == "gaussian":
             return res, torch.clamp(self.log_sigma, min=-2.5, max=self.max_sigma)
         return res
 
@@ -89,7 +102,9 @@ class ValuePARAFAC(torch.nn.Module):
 
         factors = []
         for dim in dims:
-            factor = scale * (torch.randn(dim, k, dtype=torch.double, requires_grad=True) + bias)
+            factor = scale * (
+                torch.randn(dim, k, dtype=torch.double, requires_grad=True) + bias
+            )
             factors.append(torch.nn.Parameter(factor))
         self.factors = torch.nn.ParameterList(factors)
 
@@ -106,15 +121,17 @@ class ValuePARAFAC(torch.nn.Module):
 
 
 class PolicyRBF(torch.nn.Module):
-    def __init__(self, num_inputs, num_rbf_features, num_outputs, model='gaussian', max_sigma=0.0):
+    def __init__(
+        self, num_inputs, num_rbf_features, num_outputs, model="gaussian", max_sigma=0.0
+    ):
         super(PolicyRBF, self).__init__()
         self.num_rbf_features = num_rbf_features
         self.centers = torch.randn(num_rbf_features, num_inputs).double()
         self.linear = torch.nn.Linear(num_rbf_features, num_outputs)
         self.max_sigma = max_sigma
-        
+
         self.model = model
-        if model == 'gaussian':
+        if model == "gaussian":
             self.log_sigma = torch.nn.Parameter(torch.zeros(1, num_outputs) + max_sigma)
 
     def radial_basis(self, x):
@@ -126,7 +143,7 @@ class PolicyRBF(torch.nn.Module):
     def forward(self, x):
         rbf_feats = self.radial_basis(x)
         x = self.linear(rbf_feats).squeeze()
-        if self.model == 'gaussian':
+        if self.model == "gaussian":
             return x, torch.clamp(self.log_sigma, min=-2.0, max=self.max_sigma)
         return x
 

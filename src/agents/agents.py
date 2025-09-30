@@ -6,7 +6,9 @@ import torch.nn as nn
 
 
 class GaussianAgent(nn.Module):
-    def __init__(self, actor, critic, discretizer_actor=None, discretizer_critic=None) -> None:
+    def __init__(
+        self, actor, critic, discretizer_actor=None, discretizer_critic=None
+    ) -> None:
         super(GaussianAgent, self).__init__()
 
         self.actor = actor
@@ -31,7 +33,9 @@ class GaussianAgent(nn.Module):
         pi = torch.distributions.Normal(mu.squeeze(), sigma.squeeze())
         return pi
 
-    def evaluate_logprob(self, state: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
+    def evaluate_logprob(
+        self, state: torch.Tensor, action: torch.Tensor
+    ) -> torch.Tensor:
         # Actor
         dist = self.pi(state)
         action_logprob = dist.log_prob(action)
@@ -55,7 +59,16 @@ class GaussianAgent(nn.Module):
 
 
 class SoftmaxAgent(nn.Module):
-    def __init__(self, actor, critic, n_a, discretizer_actor=None, discretizer_critic=None, beta=1.0, max_p=0.99) -> None:
+    def __init__(
+        self,
+        actor,
+        critic,
+        n_a,
+        discretizer_actor=None,
+        discretizer_critic=None,
+        beta=1.0,
+        max_p=0.99,
+    ) -> None:
         super(SoftmaxAgent, self).__init__()
 
         self.actor = actor
@@ -66,7 +79,9 @@ class SoftmaxAgent(nn.Module):
 
         self.beta = beta
         self.max_logit = 1
-        self.min_logit = np.log(((np.exp(self.max_logit) / max_p) - np.exp(self.max_logit)) / (n_a - 1))
+        self.min_logit = np.log(
+            ((np.exp(self.max_logit) / max_p) - np.exp(self.max_logit)) / (n_a - 1)
+        )
 
     def pi(self, state: np.ndarray) -> torch.distributions.Normal:
         state = torch.as_tensor(state).double()
@@ -84,7 +99,9 @@ class SoftmaxAgent(nn.Module):
         pi = torch.distributions.categorical.Categorical(logits=logits)
         return pi
 
-    def evaluate_logprob(self, state: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
+    def evaluate_logprob(
+        self, state: torch.Tensor, action: torch.Tensor
+    ) -> torch.Tensor:
         # Actor
         dist = self.pi(state)
         action_logprob = dist.log_prob(action)

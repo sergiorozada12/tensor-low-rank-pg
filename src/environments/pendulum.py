@@ -10,8 +10,8 @@ class PendulumEnvDiscrete(PendulumEnv):
         m = self.m
         l = self.l
         dt = self.dt
-        
-        u = 2*u - 2.0
+
+        u = 2 * u - 2.0
         self.last_u = u  # for rendering
         costs = angle_normalize(th) ** 2 + 0.1 * thdot**2 + 0.001 * (u**2)
 

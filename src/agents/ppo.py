@@ -15,11 +15,11 @@ class PPOGaussianNN:
         critic,
         discretizer_actor=None,
         discretizer_critic=None,
-        lr_actor: float=1e-3,
-        gamma: float=0.99,
-        tau: float=0.97,
-        epochs: int=1000,
-        eps_clip: float=0.2,
+        lr_actor: float = 1e-3,
+        gamma: float = 0.99,
+        tau: float = 0.97,
+        epochs: int = 1000,
+        eps_clip: float = 0.2,
     ) -> None:
 
         self.gamma = gamma
@@ -32,8 +32,12 @@ class PPOGaussianNN:
         actor_old = deepcopy(actor)
         critic_old = deepcopy(critic)
 
-        self.policy = GaussianAgent(actor, critic, discretizer_actor, discretizer_critic)
-        self.policy_old = GaussianAgent(actor_old, critic_old, discretizer_actor, discretizer_critic)
+        self.policy = GaussianAgent(
+            actor, critic, discretizer_actor, discretizer_critic
+        )
+        self.policy_old = GaussianAgent(
+            actor_old, critic_old, discretizer_actor, discretizer_critic
+        )
         self.policy_old.load_state_dict(self.policy.state_dict())
 
         self.opt_actor = torch.optim.Adam(self.policy.parameters(), lr_actor)
@@ -42,7 +46,7 @@ class PPOGaussianNN:
             self.policy.critic.parameters(),
             history_size=100,
             max_iter=25,
-            line_search_fn='strong_wolfe',
+            line_search_fn="strong_wolfe",
         )
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
@@ -58,7 +62,7 @@ class PPOGaussianNN:
 
     def calculate_returns(self, values) -> List[float]:
         returns = []
-        advantages=[]
+        advantages = []
 
         prev_return = 0
         prev_value = 0
@@ -67,9 +71,11 @@ class PPOGaussianNN:
             reward = self.buffer.rewards[i]
             mask = 1 - self.buffer.terminals[i]
 
-            actual_return = reward + self.gamma*prev_return*mask
-            actual_delta = reward + self.gamma*prev_value*mask - values[i]
-            actual_advantage = actual_delta + self.gamma*self.tau*prev_advantage*mask        
+            actual_return = reward + self.gamma * prev_return * mask
+            actual_delta = reward + self.gamma * prev_value * mask - values[i]
+            actual_advantage = (
+                actual_delta + self.gamma * self.tau * prev_advantage * mask
+            )
 
             returns.insert(0, actual_return)
             advantages.insert(0, actual_advantage)
@@ -80,7 +86,7 @@ class PPOGaussianNN:
 
         returns = torch.as_tensor(returns).double().detach().squeeze()
         advantages = torch.as_tensor(advantages).double().detach().squeeze()
-        advantages = (advantages - advantages.mean())/advantages.std()
+        advantages = (advantages - advantages.mean()) / advantages.std()
 
         return returns, advantages
 
@@ -107,6 +113,7 @@ class PPOGaussianNN:
             loss.backward()
             self.zero_grad(self.policy.critic, idx)
             return loss
+
         self.opt_critic.step(closure)
 
         return advantages
@@ -116,7 +123,7 @@ class PPOGaussianNN:
         old_actions = torch.stack(self.buffer.actions, dim=0).detach().squeeze()
         old_logprobs = torch.stack(self.buffer.logprobs, dim=0).detach().squeeze()
         if old_logprobs.dim() > 1:
-                old_logprobs = old_logprobs.sum(dim=1)
+            old_logprobs = old_logprobs.sum(dim=1)
 
         # Stochastic Gradient Ascent
         for _ in range(self.epochs):
@@ -147,11 +154,11 @@ class PPOSoftmaxNN:
         n_a,
         discretizer_actor=None,
         discretizer_critic=None,
-        lr_actor: float=1e-3,
-        gamma: float=0.99,
-        tau: float=0.97,
-        epochs: int=1000,
-        eps_clip: float=0.2,
+        lr_actor: float = 1e-3,
+        gamma: float = 0.99,
+        tau: float = 0.97,
+        epochs: int = 1000,
+        eps_clip: float = 0.2,
         beta=1.0,
         max_p=0.99,
     ) -> None:
@@ -166,8 +173,18 @@ class PPOSoftmaxNN:
         actor_old = deepcopy(actor)
         critic_old = deepcopy(critic)
 
-        self.policy = SoftmaxAgent(actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p)
-        self.policy_old = SoftmaxAgent(actor_old, critic_old, n_a, discretizer_actor, discretizer_critic, beta, max_p)
+        self.policy = SoftmaxAgent(
+            actor, critic, n_a, discretizer_actor, discretizer_critic, beta, max_p
+        )
+        self.policy_old = SoftmaxAgent(
+            actor_old,
+            critic_old,
+            n_a,
+            discretizer_actor,
+            discretizer_critic,
+            beta,
+            max_p,
+        )
         self.policy_old.load_state_dict(self.policy.state_dict())
 
         self.opt_actor = torch.optim.Adam(self.policy.actor.parameters(), lr_actor)
@@ -176,7 +193,7 @@ class PPOSoftmaxNN:
             self.policy.critic.parameters(),
             history_size=100,
             max_iter=25,
-            line_search_fn='strong_wolfe',
+            line_search_fn="strong_wolfe",
         )
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
@@ -192,7 +209,7 @@ class PPOSoftmaxNN:
 
     def calculate_returns(self, values) -> List[float]:
         returns = []
-        advantages=[]
+        advantages = []
 
         prev_return = 0
         prev_value = 0
@@ -201,9 +218,11 @@ class PPOSoftmaxNN:
             reward = self.buffer.rewards[i]
             mask = 1 - self.buffer.terminals[i]
 
-            actual_return = reward + self.gamma*prev_return*mask
-            actual_delta = reward + self.gamma*prev_value*mask - values[i]
-            actual_advantage = actual_delta + self.gamma*self.tau*prev_advantage*mask        
+            actual_return = reward + self.gamma * prev_return * mask
+            actual_delta = reward + self.gamma * prev_value * mask - values[i]
+            actual_advantage = (
+                actual_delta + self.gamma * self.tau * prev_advantage * mask
+            )
 
             returns.insert(0, actual_return)
             advantages.insert(0, actual_advantage)
@@ -214,7 +233,7 @@ class PPOSoftmaxNN:
 
         returns = torch.as_tensor(returns).double().detach().squeeze()
         advantages = torch.as_tensor(advantages).double().detach().squeeze()
-        advantages = (advantages - advantages.mean())/advantages.std()
+        advantages = (advantages - advantages.mean()) / advantages.std()
 
         return returns, advantages
 
@@ -242,6 +261,7 @@ class PPOSoftmaxNN:
                 loss.backward()
                 self.zero_grad(self.policy.critic, idx)
             return loss
+
         self.opt_critic.step(closure)
 
         return advantages

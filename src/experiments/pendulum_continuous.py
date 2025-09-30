@@ -10,7 +10,7 @@ from src.models import (
     PolicyPARAFAC,
     ValuePARAFAC,
     PolicyRBF,
-    ValueRBF
+    ValueRBF,
 )
 from src.utils import Discretizer
 from src.agents.reinforce import ReinforceGaussianNN
@@ -27,7 +27,7 @@ def run_experiment_reinforce_nn(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
+    env = gym.make("Pendulum-v1", g=9.81)
     actor = PolicyNetwork(3, [64], 1).double()
     critic = ValueNetwork(3, [64], 1).double()
 
@@ -40,8 +40,10 @@ def run_experiment_reinforce_nn(experiment_index):
         epochs=10,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=2000, max_steps=1000, update_freq=10_000, initial_offset=0)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=2000, max_steps=1000, update_freq=10_000, initial_offset=0
+    )
 
     return G
 
@@ -51,22 +53,18 @@ def run_experiment_ppo_nn(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
+    env = gym.make("Pendulum-v1", g=9.81)
     actor = PolicyNetwork(3, [64], 1).double()
     critic = ValueNetwork(3, [64], 1).double()
 
     agent = PPOGaussianNN(
-        actor,
-        critic,
-        lr_actor=1e-3,
-        gamma=0.9,
-        tau=0.9,
-        epochs=10,
-        eps_clip=0.3 
+        actor, critic, lr_actor=1e-3, gamma=0.9, tau=0.9, epochs=10, eps_clip=0.3
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=1_000, max_steps=1000, update_freq=10_000, initial_offset=0)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=1_000, max_steps=1000, update_freq=10_000, initial_offset=0
+    )
     return G
 
 
@@ -75,7 +73,7 @@ def run_experiment_trpo_nn(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
+    env = gym.make("Pendulum-v1", g=9.81)
     actor = PolicyNetwork(3, [64], 1).double()
     critic = ValueNetwork(3, [64], 1).double()
 
@@ -90,7 +88,7 @@ def run_experiment_trpo_nn(experiment_index):
         cg_iteration=5,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
     _, G, _ = trainer.train(
         env,
         agent,
@@ -107,7 +105,7 @@ def run_experiment_reinforce_ten(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
+    env = gym.make("Pendulum-v1", g=9.81)
 
     discretizer = Discretizer(
         min_points=[-1, -1, -5],
@@ -126,11 +124,13 @@ def run_experiment_reinforce_ten(experiment_index):
         gamma=0.9,
         tau=0.9,
         lr_actor=1e-3,
-        epochs=10
+        epochs=10,
     )
 
-    trainer = Trainer(actor_opt='bcd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=2000, max_steps=1000, update_freq=10_000, initial_offset=0)
+    trainer = Trainer(actor_opt="bcd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=2000, max_steps=1000, update_freq=10_000, initial_offset=0
+    )
 
     return G
 
@@ -140,7 +140,7 @@ def run_experiment_ppo_ten(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
+    env = gym.make("Pendulum-v1", g=9.81)
 
     discretizer = Discretizer(
         min_points=[-1, -1, -5],
@@ -160,11 +160,13 @@ def run_experiment_ppo_ten(experiment_index):
         gamma=0.9,
         tau=0.9,
         epochs=10,
-        eps_clip=0.3
+        eps_clip=0.3,
     )
 
-    trainer = Trainer(actor_opt='bcd', critic_opt='bcd')
-    _, G, _ = trainer.train(env, agent, epochs=1_000, max_steps=1000, update_freq=10_000, initial_offset=0)
+    trainer = Trainer(actor_opt="bcd", critic_opt="bcd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=1_000, max_steps=1000, update_freq=10_000, initial_offset=0
+    )
 
     return G
 
@@ -174,7 +176,7 @@ def run_experiment_trpo_ten(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
+    env = gym.make("Pendulum-v1", g=9.81)
 
     discretizer = Discretizer(
         min_points=[-1, -1, -5],
@@ -198,7 +200,7 @@ def run_experiment_trpo_ten(experiment_index):
         cg_iteration=5,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
     _, G, _ = trainer.train(
         env,
         agent,
@@ -216,8 +218,8 @@ def run_experiment_reinforce_rbf(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
-    actor = PolicyRBF(3, 300, 1, model='gaussian').double()
+    env = gym.make("Pendulum-v1", g=9.81)
+    actor = PolicyRBF(3, 300, 1, model="gaussian").double()
     critic = ValueRBF(3, 300, 1).double()
 
     agent = ReinforceGaussianNN(
@@ -229,8 +231,10 @@ def run_experiment_reinforce_rbf(experiment_index):
         epochs=10,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=2000, max_steps=1000, update_freq=10_000, initial_offset=0)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=2000, max_steps=1000, update_freq=10_000, initial_offset=0
+    )
 
     return G
 
@@ -240,22 +244,18 @@ def run_experiment_ppo_rbf(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
-    actor = PolicyRBF(3, 300, 1, model='gaussian').double()
+    env = gym.make("Pendulum-v1", g=9.81)
+    actor = PolicyRBF(3, 300, 1, model="gaussian").double()
     critic = ValueRBF(3, 300, 1).double()
 
     agent = PPOGaussianNN(
-        actor,
-        critic,
-        lr_actor=1e-3,
-        gamma=0.9,
-        tau=0.9,
-        epochs=10,
-        eps_clip=0.3 
+        actor, critic, lr_actor=1e-3, gamma=0.9, tau=0.9, epochs=10, eps_clip=0.3
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=1_000, max_steps=1000, update_freq=10_000, initial_offset=0)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=1_000, max_steps=1000, update_freq=10_000, initial_offset=0
+    )
     return G
 
 
@@ -264,8 +264,8 @@ def run_experiment_trpo_rbf(experiment_index):
     np.random.seed(experiment_index)
     torch.manual_seed(experiment_index)
 
-    env = gym.make('Pendulum-v1', g=9.81)
-    actor = PolicyRBF(3, 300, 1, model='gaussian').double()
+    env = gym.make("Pendulum-v1", g=9.81)
+    actor = PolicyRBF(3, 300, 1, model="gaussian").double()
     critic = ValueRBF(3, 300, 1).double()
 
     agent = TRPOGaussianNN(
@@ -279,7 +279,7 @@ def run_experiment_trpo_rbf(experiment_index):
         cg_iteration=5,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
     _, G, _ = trainer.train(
         env,
         agent,
@@ -293,23 +293,26 @@ def run_experiment_trpo_rbf(experiment_index):
 
 def run_paralell(func, filename, num_experiments, num_processes):
     with multiprocessing.Pool(processes=num_processes) as pool:
-        results = pool.map(
-            func,
-            range(num_experiments)
-        )
+        results = pool.map(func, range(num_experiments))
     results = np.array(results)
     np.save(f"results/{filename}.npy", results)
 
 
 def run_pendulum_cont_experiments(nexps, nprocs):
-    run_paralell(run_experiment_reinforce_nn, 'pendulum_continuous_reinforce_nn', nexps, nprocs)
-    run_paralell(run_experiment_reinforce_rbf, 'pendulum_continuous_reinforce_rbf', nexps, nprocs)
-    run_paralell(run_experiment_reinforce_ten, 'pendulum_continuous_reinforce_ten', nexps, nprocs)
+    run_paralell(
+        run_experiment_reinforce_nn, "pendulum_continuous_reinforce_nn", nexps, nprocs
+    )
+    run_paralell(
+        run_experiment_reinforce_rbf, "pendulum_continuous_reinforce_rbf", nexps, nprocs
+    )
+    run_paralell(
+        run_experiment_reinforce_ten, "pendulum_continuous_reinforce_ten", nexps, nprocs
+    )
 
-    run_paralell(run_experiment_ppo_nn, 'pendulum_continuous_ppo_nn', nexps, nprocs)
-    run_paralell(run_experiment_ppo_rbf, 'pendulum_continuous_ppo_rbf', nexps, nprocs)
-    run_paralell(run_experiment_ppo_ten, 'pendulum_continuous_ppo_ten', nexps, nprocs)
+    run_paralell(run_experiment_ppo_nn, "pendulum_continuous_ppo_nn", nexps, nprocs)
+    run_paralell(run_experiment_ppo_rbf, "pendulum_continuous_ppo_rbf", nexps, nprocs)
+    run_paralell(run_experiment_ppo_ten, "pendulum_continuous_ppo_ten", nexps, nprocs)
 
-    run_paralell(run_experiment_trpo_nn, 'pendulum_continuous_trpo_nn', nexps, nprocs)
-    run_paralell(run_experiment_trpo_rbf, 'pendulum_continuous_trpo_rbf', nexps, nprocs)
-    run_paralell(run_experiment_trpo_ten, 'pendulum_continuous_trpo_ten', nexps, nprocs)
+    run_paralell(run_experiment_trpo_nn, "pendulum_continuous_trpo_nn", nexps, nprocs)
+    run_paralell(run_experiment_trpo_rbf, "pendulum_continuous_trpo_rbf", nexps, nprocs)
+    run_paralell(run_experiment_trpo_ten, "pendulum_continuous_trpo_ten", nexps, nprocs)

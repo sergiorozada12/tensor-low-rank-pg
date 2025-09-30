@@ -10,7 +10,7 @@ from src.models import (
     PolicyPARAFAC,
     ValuePARAFAC,
     PolicyRBF,
-    ValueRBF
+    ValueRBF,
 )
 from src.utils import Discretizer
 from src.agents.reinforce import ReinforceGaussianNN
@@ -40,8 +40,10 @@ def run_experiment_reinforce_nn(experiment_index):
         epochs=10,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10
+    )
     return G
 
 
@@ -55,17 +57,13 @@ def run_experiment_ppo_nn(experiment_index):
     critic = ValueNetwork(2, [8], 1).double()
 
     agent = PPOGaussianNN(
-        actor,
-        critic,
-        lr_actor=1e-3,
-        gamma=0.99,
-        tau=0.9,
-        epochs=10,
-        eps_clip=0.2 
+        actor, critic, lr_actor=1e-3, gamma=0.99, tau=0.9, epochs=10, eps_clip=0.2
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10
+    )
     return G
 
 
@@ -89,7 +87,7 @@ def run_experiment_trpo_nn(experiment_index):
         cg_iteration=10,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
     _, G, _ = trainer.train(
         env,
         agent,
@@ -125,11 +123,13 @@ def run_experiment_reinforce_ten(experiment_index):
         gamma=0.99,
         tau=0.9,
         lr_actor=1e-3,
-        epochs=10
+        epochs=10,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10
+    )
     print(np.array(G).shape, flush=True)
     return G
 
@@ -159,16 +159,23 @@ def run_experiment_ppo_ten(experiment_index):
         gamma=0.99,
         tau=0.9,
         epochs=10,
-        eps_clip=0.2 
+        eps_clip=0.2,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
 
     try:
-        _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+        _, G, _ = trainer.train(
+            env,
+            agent,
+            epochs=500,
+            max_steps=10000,
+            update_freq=10_000,
+            initial_offset=10,
+        )
         return G
     except:
-        return [0]*500
+        return [0] * 500
 
 
 def run_experiment_trpo_ten(experiment_index):
@@ -200,7 +207,7 @@ def run_experiment_trpo_ten(experiment_index):
         cg_iteration=10,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
     _, G, _ = trainer.train(
         env,
         agent,
@@ -218,7 +225,7 @@ def run_experiment_reinforce_rbf(experiment_index):
     torch.manual_seed(experiment_index)
 
     env = gym.make("MountainCarContinuous-v0")
-    actor = PolicyRBF(2, 20, 1, model='gaussian').double()
+    actor = PolicyRBF(2, 20, 1, model="gaussian").double()
     critic = ValueRBF(2, 20, 1).double()
 
     agent = ReinforceGaussianNN(
@@ -230,9 +237,12 @@ def run_experiment_reinforce_rbf(experiment_index):
         epochs=10,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10
+    )
     return G
+
 
 def run_experiment_ppo_rbf(experiment_index):
     random.seed(experiment_index)
@@ -240,22 +250,19 @@ def run_experiment_ppo_rbf(experiment_index):
     torch.manual_seed(experiment_index)
 
     env = gym.make("MountainCarContinuous-v0")
-    actor = PolicyRBF(2, 20, 1, model='gaussian').double()
+    actor = PolicyRBF(2, 20, 1, model="gaussian").double()
     critic = ValueRBF(2, 20, 1).double()
 
     agent = PPOGaussianNN(
-        actor,
-        critic,
-        lr_actor=1e-3,
-        gamma=0.99,
-        tau=0.9,
-        epochs=10,
-        eps_clip=0.2 
+        actor, critic, lr_actor=1e-3, gamma=0.99, tau=0.9, epochs=10, eps_clip=0.2
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
-    _, G, _ = trainer.train(env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10)
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
+    _, G, _ = trainer.train(
+        env, agent, epochs=500, max_steps=10000, update_freq=10_000, initial_offset=10
+    )
     return G
+
 
 def run_experiment_trpo_rbf(experiment_index):
     random.seed(experiment_index)
@@ -263,7 +270,7 @@ def run_experiment_trpo_rbf(experiment_index):
     torch.manual_seed(experiment_index)
 
     env = gym.make("MountainCarContinuous-v0")
-    actor = PolicyRBF(2, 20, 1, model='gaussian', max_sigma=1.0).double()
+    actor = PolicyRBF(2, 20, 1, model="gaussian", max_sigma=1.0).double()
     critic = ValueRBF(2, 20, 1).double()
 
     agent = TRPOGaussianNN(
@@ -277,7 +284,7 @@ def run_experiment_trpo_rbf(experiment_index):
         cg_iteration=10,
     )
 
-    trainer = Trainer(actor_opt='sgd', critic_opt='sgd')
+    trainer = Trainer(actor_opt="sgd", critic_opt="sgd")
     _, G, _ = trainer.train(
         env,
         agent,
@@ -291,23 +298,45 @@ def run_experiment_trpo_rbf(experiment_index):
 
 def run_paralell(func, filename, num_experiments, num_processes):
     with multiprocessing.Pool(processes=num_processes) as pool:
-        results = pool.map(
-            func,
-            range(num_experiments)
-        )
+        results = pool.map(func, range(num_experiments))
     results = np.array(results)
     np.save(f"results/{filename}.npy", results)
 
 
 def run_mountaincar_cont_experiments(nexps, nprocs):
-    run_paralell(run_experiment_reinforce_nn, 'mountaincar_continuous_reinforce_nn', nexps, nprocs)
-    run_paralell(run_experiment_reinforce_rbf, 'mountaincar_continuous_reinforce_rbf', nexps, nprocs)
-    run_paralell(run_experiment_reinforce_ten, 'mountaincar_continuous_reinforce_ten', nexps, nprocs)
+    run_paralell(
+        run_experiment_reinforce_nn,
+        "mountaincar_continuous_reinforce_nn",
+        nexps,
+        nprocs,
+    )
+    run_paralell(
+        run_experiment_reinforce_rbf,
+        "mountaincar_continuous_reinforce_rbf",
+        nexps,
+        nprocs,
+    )
+    run_paralell(
+        run_experiment_reinforce_ten,
+        "mountaincar_continuous_reinforce_ten",
+        nexps,
+        nprocs,
+    )
 
-    run_paralell(run_experiment_ppo_nn, 'mountaincar_continuous_ppo_nn', nexps, nprocs)
-    run_paralell(run_experiment_ppo_rbf, 'mountaincar_continuous_ppo_rbf', nexps, nprocs)
-    run_paralell(run_experiment_ppo_ten, 'mountaincar_continuous_ppo_ten', nexps, nprocs)
+    run_paralell(run_experiment_ppo_nn, "mountaincar_continuous_ppo_nn", nexps, nprocs)
+    run_paralell(
+        run_experiment_ppo_rbf, "mountaincar_continuous_ppo_rbf", nexps, nprocs
+    )
+    run_paralell(
+        run_experiment_ppo_ten, "mountaincar_continuous_ppo_ten", nexps, nprocs
+    )
 
-    run_paralell(run_experiment_trpo_nn, 'mountaincar_continuous_trpo_nn', nexps, nprocs)
-    run_paralell(run_experiment_trpo_rbf, 'mountaincar_continuous_trpo_rbf', nexps, nprocs)
-    run_paralell(run_experiment_trpo_ten, 'mountaincar_continuous_trpo_ten', nexps, nprocs)
+    run_paralell(
+        run_experiment_trpo_nn, "mountaincar_continuous_trpo_nn", nexps, nprocs
+    )
+    run_paralell(
+        run_experiment_trpo_rbf, "mountaincar_continuous_trpo_rbf", nexps, nprocs
+    )
+    run_paralell(
+        run_experiment_trpo_ten, "mountaincar_continuous_trpo_ten", nexps, nprocs
+    )
