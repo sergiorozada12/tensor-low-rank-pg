@@ -36,7 +36,7 @@ def plot_wireless():
         med = np.median(wireless_ten, axis=0)
         p25 = np.percentile(wireless_ten, q=25, axis=0)
         p75 = np.percentile(wireless_ten, q=75, axis=0)
-        plt.plot(med, label="PTLRPO - 902 params.", color="r")
+        plt.plot(med, label="TLR-PPO - 902 params.", color="r")
         plt.fill_between(range(p25.shape[0]), p25, p75, alpha=0.2, color="r")
 
         plt.gca().yaxis.set_major_formatter(OOMFormatter(3, "%1.2f"))
