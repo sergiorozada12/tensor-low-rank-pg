@@ -47,7 +47,7 @@ def plot_control():
     mount_disc_trpo_rbf = np.load("results/mountaincar_discrete_trpo_rbf.npy")
 
     with plt.style.context(["science"], ["ieee"]):
-        matplotlib.rcParams.update({"font.size": 12})
+        matplotlib.rcParams.update({"font.size": 11})
         fig, axs = plt.subplots(2, 3, figsize=(10, 5))  # Adjust figsize as needed
 
         # Pendulum Continuous
@@ -219,7 +219,7 @@ def plot_control():
         fig.savefig("figures/fig_2.jpg", dpi=300)
 
     with plt.style.context(["science"], ["ieee"]):
-        matplotlib.rcParams.update({"font.size": 12})
+        matplotlib.rcParams.update({"font.size": 11})
         fig, axs = plt.subplots(2, 3, figsize=(10, 5))  # Adjust figsize as needed
 
         # Pendulum Discrete
